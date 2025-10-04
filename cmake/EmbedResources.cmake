@@ -147,7 +147,7 @@ function(_embed_resources_windows)
         string(APPEND RESOURCE_ID_DEFINITIONS "#define k${ResourceIdUpper} ${ID_COUNTER}\n")
 
         # RC file entry
-        string(APPEND RESOURCE_ENTRIES "k${ResourceIdUpper} RCDATA \"${ResourceFile}\"\n")
+        string(APPEND RESOURCE_ENTRIES "k${ResourceIdUpper} RCDATA \"${ER_RESOURCE_DIR}/${ResourceFile}\"\n")
 
         # Accessor functions with better names
         string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Data() -> const uint8_t* {\n")
@@ -172,6 +172,7 @@ function(_embed_resources_windows)
     endforeach()
 
     # Configure templates
+    set(NAMESPACE ${ER_NAMESPACE})
     string(TOUPPER ${ER_NAMESPACE} NAMESPACE_UPPER)
 
     configure_file(

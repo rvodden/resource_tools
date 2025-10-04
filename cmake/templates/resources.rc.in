@@ -1,4 +1,4 @@
 #include <windows.h>
-#include "resource_ids.h"
+#include "@NAMESPACE@/resource_ids.h"
 
 @RESOURCE_ENTRIES@
