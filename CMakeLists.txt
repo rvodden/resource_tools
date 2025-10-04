@@ -43,7 +43,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR RESOURCE_TOOLS_BUILD_TESTS OR BUI
 
     # Fixture to install resource_tools to test directory
     add_test(NAME install_resource_tools
-        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --prefix ${INSTALL_TEST_DIR} --component resource_tools_Development
+        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} --prefix ${INSTALL_TEST_DIR} --component resource_tools
     )
     set_tests_properties(install_resource_tools PROPERTIES
         FIXTURES_SETUP install_fixture
