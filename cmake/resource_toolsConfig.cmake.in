@@ -1,0 +1,15 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Set up the module path for EmbedResources
+set(resource_tools_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${resource_tools_CMAKE_DIR}")
+
+# Include the EmbedResources module
+include(EmbedResources)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/resource_toolsTargets.cmake")
+
+check_required_components(resource_tools)

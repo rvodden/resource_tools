@@ -70,56 +70,56 @@ include(CMakePackageConfigHelpers)
 
 # Install the library
 install(TARGETS resource_tools
-    EXPORT resource_tools-targets
+    EXPORT resource_toolsTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT resource_tools_Development
+    COMPONENT resource_tools
 )
 
 # Install headers
 install(DIRECTORY include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    COMPONENT resource_tools_Development
+    COMPONENT resource_tools
 )
 
 # Install CMake modules
 install(FILES cmake/EmbedResources.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/resource_tools
-    COMPONENT resource_tools_Development
+    COMPONENT resource_tools
 )
 
 install(DIRECTORY cmake/templates/
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/resource_tools/templates
-    COMPONENT resource_tools_Development
+    COMPONENT resource_tools
 )
 
 # Install targets file
-install(EXPORT resource_tools-targets
-    FILE resource_tools-targets.cmake
+install(EXPORT resource_toolsTargets
+    FILE resource_toolsTargets.cmake
     NAMESPACE resource_tools::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/resource_tools
-    COMPONENT resource_tools_Development
+    COMPONENT resource_tools
 )
 
 # Create config file
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/resource_tools-config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/resource_tools-config.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/resource_toolsConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/resource_toolsConfig.cmake"
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/resource_tools
 )
 
 # Create version file
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/resource_tools-config-version.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/resource_toolsConfigVersion.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 # Install config files
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/resource_tools-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/resource_tools-config-version.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/resource_toolsConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/resource_toolsConfigVersion.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/resource_tools
-    COMPONENT resource_tools_Development
+    COMPONENT resource_tools
 )
