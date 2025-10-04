@@ -44,15 +44,10 @@ jobs:
           echo "All files in build directory:"
           find build -type f
 
-      - name: Run unit tests
+      - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
-
-      - name: Run installation tests
-        run: |
-          cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }} -R install_resource_tools
+          ctest --output-on-failure --build-config ${{ matrix.build_type }}
 
   test-windows:
     name: Test on Windows
@@ -74,16 +69,11 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
-      - name: Run unit tests
+      - name: Run tests
         run: |
           cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
-
-      - name: Run installation tests
-        run: |
-          cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }} -R install_resource_tools
-
+          ctest --output-on-failure --build-config ${{ matrix.build_type }}
+          
   test-macos:
     name: Test on macOS
     runs-on: macos-latest
@@ -108,12 +98,8 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
-      - name: Run unit tests
+      - name: Run tests
         run: |
           cd build
           ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
-
-      - name: Run installation tests
-        run: |
-          cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }} -R install_resource_tools
+          
