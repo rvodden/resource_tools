@@ -1,0 +1,96 @@
+# CMake script to test installed resource_tools
+# This script will:
+# 1. Configure a test project against the installed resource_tools
+# 2. Build the test project
+# 3. Run the test
+
+set(INSTALL_TEST_DIR "@INSTALL_TEST_DIR@")
+set(INSTALL_TEST_BUILD_DIR "@INSTALL_TEST_BUILD_DIR@")
+set(CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@")
+
+message(STATUS "Testing installed resource_tools...")
+message(STATUS "Install directory: ${INSTALL_TEST_DIR}")
+message(STATUS "Test build directory: ${INSTALL_TEST_BUILD_DIR}")
+
+# Clean up any previous test build
+file(REMOVE_RECURSE "${INSTALL_TEST_BUILD_DIR}")
+file(MAKE_DIRECTORY "${INSTALL_TEST_BUILD_DIR}")
+
+# Step 1: Configure the test project
+message(STATUS "Configuring test project...")
+message(STATUS "CMAKE_PREFIX_PATH will be set to: ${INSTALL_TEST_DIR}")
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        -S "@CMAKE_CURRENT_SOURCE_DIR@/test_project"
+        -B "${INSTALL_TEST_BUILD_DIR}"
+        -DCMAKE_PREFIX_PATH=${INSTALL_TEST_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    RESULT_VARIABLE configure_result
+    OUTPUT_VARIABLE configure_output
+    ERROR_VARIABLE configure_error
+)
+
+if(NOT configure_result EQUAL 0)
+    message(FATAL_ERROR "Failed to configure test project:\n${configure_output}\n${configure_error}")
+endif()
+
+message(STATUS "Test project configured successfully")
+
+# Step 2: Build the test project
+message(STATUS "Building test project...")
+execute_process(
+    COMMAND ${CMAKE_COMMAND} --build .
+    WORKING_DIRECTORY "${INSTALL_TEST_BUILD_DIR}"
+    RESULT_VARIABLE build_result
+    OUTPUT_VARIABLE build_output
+    ERROR_VARIABLE build_error
+)
+
+if(NOT build_result EQUAL 0)
+    message(FATAL_ERROR "Failed to build test project:\n${build_output}\n${build_error}")
+endif()
+
+message(STATUS "Test project built successfully")
+
+# Step 3: Run the test
+message(STATUS "Running installation test...")
+
+# Find the test executable
+set(TEST_EXECUTABLE "")
+if(WIN32)
+    if(EXISTS "${INSTALL_TEST_BUILD_DIR}/${CMAKE_BUILD_TYPE}/test_app.exe")
+        set(TEST_EXECUTABLE "${INSTALL_TEST_BUILD_DIR}/${CMAKE_BUILD_TYPE}/test_app.exe")
+    elseif(EXISTS "${INSTALL_TEST_BUILD_DIR}/Debug/test_app.exe")
+        set(TEST_EXECUTABLE "${INSTALL_TEST_BUILD_DIR}/Debug/test_app.exe")
+    elseif(EXISTS "${INSTALL_TEST_BUILD_DIR}/Release/test_app.exe")
+        set(TEST_EXECUTABLE "${INSTALL_TEST_BUILD_DIR}/Release/test_app.exe")
+    endif()
+else()
+    if(EXISTS "${INSTALL_TEST_BUILD_DIR}/test_app")
+        set(TEST_EXECUTABLE "${INSTALL_TEST_BUILD_DIR}/test_app")
+    endif()
+endif()
+
+if(TEST_EXECUTABLE STREQUAL "")
+    message(FATAL_ERROR "Could not find test executable in ${INSTALL_TEST_BUILD_DIR}")
+endif()
+
+message(STATUS "Running: ${TEST_EXECUTABLE}")
+execute_process(
+    COMMAND "${TEST_EXECUTABLE}"
+    WORKING_DIRECTORY "${INSTALL_TEST_BUILD_DIR}"
+    RESULT_VARIABLE test_result
+    OUTPUT_VARIABLE test_output
+    ERROR_VARIABLE test_error
+)
+
+message(STATUS "Test output:\n${test_output}")
+if(NOT test_error STREQUAL "")
+    message(STATUS "Test errors:\n${test_error}")
+endif()
+
+if(NOT test_result EQUAL 0)
+    message(FATAL_ERROR "Installation test failed with exit code: ${test_result}")
+endif()
+
+message(STATUS "✅ Installation test passed! resource_tools works correctly when installed.")

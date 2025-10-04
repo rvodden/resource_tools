@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-linux:
+    name: Test on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        compiler:
+          - { cc: gcc-12, cxx: g++-12 }
+          - { cc: clang-15, cxx: clang++-15 }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+
+      - name: Configure CMake
+        env:
+          CC: ${{ matrix.compiler.cc }}
+          CXX: ${{ matrix.compiler.cxx }}
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DRESOURCE_TOOLS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run unit tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
+
+      - name: Run installation tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} -R install_resource_tools
+
+  test-windows:
+    name: Test on Windows
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: |
+          cmake -B build `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DRESOURCE_TOOLS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run unit tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
+
+      - name: Run installation tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} -R install_resource_tools
+
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install ninja
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DRESOURCE_TOOLS_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run unit tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
+
+      - name: Run installation tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} -R install_resource_tools
