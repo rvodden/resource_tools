@@ -39,6 +39,11 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
 
+      - name: Show All Files
+        run: |
+          echo "All files in build directory:"
+          find build -type f
+
       - name: Run unit tests
         run: |
           cd build
