@@ -23,6 +23,7 @@ execute_process(
     COMMAND ${CMAKE_COMMAND}
         -S "@CMAKE_CURRENT_SOURCE_DIR@/test_project"
         -B "${INSTALL_TEST_BUILD_DIR}"
+         -Dresource_tools_DIR=${INSTALL_TEST_DIR}/lib/cmake/resource_tools
         -DCMAKE_PREFIX_PATH=${INSTALL_TEST_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     RESULT_VARIABLE configure_result
