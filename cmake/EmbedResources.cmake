@@ -264,28 +264,30 @@ function(_embed_resources_unix)
         string(REGEX REPLACE "\\." "_" BinarySymbol ${ResourceName})
         string(REGEX REPLACE "[^a-zA-Z0-9_]" "_" BinarySymbol ${BinarySymbol})
 
+        # Symbol name for C linkage (with underscore prefix)
+        set(BinarySymbolName "_binary_${BinarySymbol}")
+
         # Platform-specific linker commands
         if(APPLE)
-            # macOS assembler adds underscore prefix automatically, so don't include it
-            set(BinarySymbolName "binary_${BinarySymbol}")
+            # macOS assembler adds underscore prefix automatically, so use name without prefix in assembly
+            set(AsmSymbolName "binary_${BinarySymbol}")
             # macOS: Generate assembly file and assemble it
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
             add_custom_command(
                 OUTPUT ${OutFile}
                 MAIN_DEPENDENCY ${FullResourcePath}
                 COMMAND ${CMAKE_COMMAND} -E echo ".section __DATA,__const" > ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${BinarySymbolName}_start" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo "${BinarySymbolName}_start:" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${AsmSymbolName}_start" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo "${AsmSymbolName}_start:" >> ${AsmFile}
                 COMMAND ${CMAKE_COMMAND} -E echo ".incbin \\\"${FullResourcePath}\\\"" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${BinarySymbolName}_end" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo "${BinarySymbolName}_end:" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${AsmSymbolName}_end" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo "${AsmSymbolName}_end:" >> ${AsmFile}
                 COMMAND as -o ${OutFile} ${AsmFile}
                 DEPENDS ${FullResourcePath}
                 WORKING_DIRECTORY ${ER_RESOURCE_DIR}
             )
         else()
-            # Linux/Unix uses GNU ld with underscore prefix
-            set(BinarySymbolName "_binary_${BinarySymbol}")
+            # Linux/Unix uses GNU ld
             add_custom_command(
                 OUTPUT ${OutFile}
                 MAIN_DEPENDENCY ${FullResourcePath}
