@@ -275,18 +275,13 @@ function(_embed_resources_unix)
             set(AsmSymbolName "binary_${BinarySymbol}")
             # macOS: Generate assembly file and assemble it
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
-            # Create assembly file content with proper quoting
-            set(ASM_CONTENT ".section __DATA,__const
-.globl ${AsmSymbolName}_start
-${AsmSymbolName}_start:
-.incbin \"${ResourceFile}\"
-.globl ${AsmSymbolName}_end
-${AsmSymbolName}_end:
-")
+            # Create a CMake script to generate the assembly file
+            set(GenScript "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}_gen.cmake")
+            file(WRITE ${GenScript} "file(WRITE \"${AsmFile}\" \".section __DATA,__const\\n.globl ${AsmSymbolName}_start\\n${AsmSymbolName}_start:\\n.incbin \\\"${ResourceFile}\\\"\\n.globl ${AsmSymbolName}_end\\n${AsmSymbolName}_end:\\n\")")
             add_custom_command(
                 OUTPUT ${OutFile}
                 MAIN_DEPENDENCY ${FullResourcePath}
-                COMMAND ${CMAKE_COMMAND} -E echo "${ASM_CONTENT}" > ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -P ${GenScript}
                 COMMAND as -o ${OutFile} ${AsmFile}
                 DEPENDS ${FullResourcePath}
                 WORKING_DIRECTORY ${ER_RESOURCE_DIR}
