@@ -36,6 +36,10 @@ function(embed_resources)
 
     cmake_parse_arguments(ER "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    # ============================================================================
+    # INPUT VALIDATION
+    # ============================================================================
+
     if(NOT ER_TARGET)
         message(FATAL_ERROR "embed_resources: TARGET is required")
     endif()
@@ -56,10 +60,204 @@ function(embed_resources)
         set(ER_NAMESPACE "resources")
     endif()
 
+    # VALIDATE NAMESPACE - must be valid C++ identifier
+    if(NOT ER_NAMESPACE MATCHES "^[a-zA-Z_][a-zA-Z0-9_]*$")
+        message(FATAL_ERROR
+            "embed_resources: Invalid namespace '${ER_NAMESPACE}'\n"
+            "  Namespace must be a valid C++ identifier (letters, numbers, underscores)\n"
+            "  Must start with letter or underscore\n"
+            "  Examples: 'my_resources', 'gameAssets', 'res_v2'")
+    endif()
+
+    # VALIDATE RESOURCE_DIR exists
+    if(NOT EXISTS "${ER_RESOURCE_DIR}")
+        message(FATAL_ERROR
+            "embed_resources: RESOURCE_DIR does not exist: ${ER_RESOURCE_DIR}\n"
+            "  Check that the directory path is correct")
+    endif()
+
+    if(NOT IS_DIRECTORY "${ER_RESOURCE_DIR}")
+        message(FATAL_ERROR
+            "embed_resources: RESOURCE_DIR is not a directory: ${ER_RESOURCE_DIR}\n"
+            "  Must be a directory containing resource files")
+    endif()
+
+    # VALIDATE RESOURCES - check files exist and paths are safe
+    set(MISSING_FILES "")
+    set(INVALID_PATHS "")
+    foreach(ResourceFile IN LISTS ER_RESOURCES)
+        # Check for directory traversal attempts
+        if(ResourceFile MATCHES "\\.\\.")
+            list(APPEND INVALID_PATHS "  - ${ResourceFile} (contains '..' - potential security issue)")
+        endif()
+
+        # Check for absolute paths
+        if(IS_ABSOLUTE "${ResourceFile}")
+            list(APPEND INVALID_PATHS "  - ${ResourceFile} (absolute path - must be relative to RESOURCE_DIR)")
+        endif()
+
+        # Check file exists
+        set(FullPath "${ER_RESOURCE_DIR}/${ResourceFile}")
+        if(NOT EXISTS "${FullPath}")
+            list(APPEND MISSING_FILES "  - ${ResourceFile} (expected at: ${FullPath})")
+        elseif(IS_DIRECTORY "${FullPath}")
+            list(APPEND MISSING_FILES "  - ${ResourceFile} (is a directory, not a file)")
+        endif()
+    endforeach()
+
+    if(INVALID_PATHS)
+        list(JOIN INVALID_PATHS "\n" INVALID_LIST)
+        message(FATAL_ERROR
+            "embed_resources: Invalid resource paths detected:\n${INVALID_LIST}\n"
+            "  Security: Paths must be relative to RESOURCE_DIR and not contain '..'")
+    endif()
+
+    if(MISSING_FILES)
+        list(JOIN MISSING_FILES "\n" MISSING_LIST)
+        message(FATAL_ERROR
+            "embed_resources: Missing or invalid resource files:\n${MISSING_LIST}\n"
+            "  RESOURCE_DIR: ${ER_RESOURCE_DIR}\n"
+            "  Check that files exist and paths are correct")
+    endif()
+
+    # CHECK FOR DUPLICATE SYMBOLS
+    set(SYMBOL_NAMES "")
+    set(FUNCTION_NAMES "")
+    foreach(ResourceFile IN LISTS ER_RESOURCES)
+        # Generate symbol name using same logic as templates
+        get_filename_component(ResourceName ${ResourceFile} NAME)
+        string(REGEX REPLACE "[^a-zA-Z0-9]" "_" BinarySymbol ${ResourceName})
+
+        # Generate function name
+        get_filename_component(BaseName ${ResourceFile} NAME_WE)
+        get_filename_component(Extension ${ResourceFile} EXT)
+        string(REPLACE "." "" Extension ${Extension})
+        string(REPLACE "_" ";" BaseParts ${BaseName})
+        set(CamelBaseName "")
+        foreach(Part IN LISTS BaseParts)
+            if(Part)
+                string(REPLACE "-" ";" HyphenParts ${Part})
+                foreach(HyphenPart IN LISTS HyphenParts)
+                    if(HyphenPart)
+                        string(SUBSTRING ${HyphenPart} 0 1 FirstChar)
+                        string(TOUPPER ${FirstChar} FirstChar)
+                        string(SUBSTRING ${HyphenPart} 1 -1 RestChars)
+                        string(TOLOWER ${RestChars} RestChars)
+                        string(APPEND CamelBaseName "${FirstChar}${RestChars}")
+                    endif()
+                endforeach()
+            endif()
+        endforeach()
+        string(TOUPPER ${Extension} UpperExtension)
+        set(FunctionName "${CamelBaseName}${UpperExtension}")
+
+        # Check for duplicates
+        if("${BinarySymbol}" IN_LIST SYMBOL_NAMES)
+            message(FATAL_ERROR
+                "embed_resources: Duplicate symbol name '${BinarySymbol}'\n"
+                "  Files: ${ResourceFile} and another file create the same symbol\n"
+                "  Rename one of the files to avoid collision")
+        endif()
+
+        if("${FunctionName}" IN_LIST FUNCTION_NAMES)
+            message(FATAL_ERROR
+                "embed_resources: Duplicate function name 'get${FunctionName}Data/Size()'\n"
+                "  Files create identical accessor function names\n"
+                "  Rename one of the files to avoid collision")
+        endif()
+
+        list(APPEND SYMBOL_NAMES "${BinarySymbol}")
+        list(APPEND FUNCTION_NAMES "${FunctionName}")
+    endforeach()
+
+    # ============================================================================
+    # VERBOSE/DIAGNOSTIC OUTPUT
+    # ============================================================================
+
+    if(RESOURCE_TOOLS_VERBOSE OR CMAKE_VERBOSE_MAKEFILE)
+        message(STATUS "embed_resources configuration:")
+        message(STATUS "  Target: ${ER_TARGET}")
+        message(STATUS "  Library: ${ER_TARGET}-data")
+        message(STATUS "  Namespace: ${ER_NAMESPACE}")
+        message(STATUS "  Resource dir: ${ER_RESOURCE_DIR}")
+        message(STATUS "  Header output: ${ER_HEADER_OUTPUT_DIR}/${ER_NAMESPACE}")
+        list(LENGTH ER_RESOURCES RESOURCE_COUNT)
+        message(STATUS "  Resources (${RESOURCE_COUNT} files):")
+        foreach(res IN LISTS ER_RESOURCES)
+            file(SIZE "${ER_RESOURCE_DIR}/${res}" fsize)
+            math(EXPR fsize_kb "${fsize} / 1024")
+            if(fsize_kb GREATER 0)
+                message(STATUS "    - ${res} (${fsize_kb} KB)")
+            else()
+                message(STATUS "    - ${res} (${fsize} bytes)")
+            endif()
+        endforeach()
+    endif()
+
     set(LIBRARY_NAME "${ER_TARGET}-data")
 
     # Ensure output directory exists
     file(MAKE_DIRECTORY "${ER_HEADER_OUTPUT_DIR}/${ER_NAMESPACE}")
+
+    # ============================================================================
+    # GENERATE MANIFEST FILE FOR DEBUGGING
+    # ============================================================================
+
+    set(MANIFEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${ER_TARGET}_resources.manifest")
+    file(WRITE "${MANIFEST_FILE}" "# Resource Embedding Manifest\n")
+    file(APPEND "${MANIFEST_FILE}" "# Generated by resource_tools\n\n")
+    file(APPEND "${MANIFEST_FILE}" "Target: ${ER_TARGET}\n")
+    file(APPEND "${MANIFEST_FILE}" "Library: ${LIBRARY_NAME}\n")
+    file(APPEND "${MANIFEST_FILE}" "Namespace: ${ER_NAMESPACE}\n")
+    file(APPEND "${MANIFEST_FILE}" "Resource Directory: ${ER_RESOURCE_DIR}\n")
+    file(APPEND "${MANIFEST_FILE}" "Header Output: ${ER_HEADER_OUTPUT_DIR}/${ER_NAMESPACE}\n")
+    file(APPEND "${MANIFEST_FILE}" "Platform: ${CMAKE_SYSTEM_NAME}\n")
+    file(APPEND "${MANIFEST_FILE}" "\n# Resources:\n\n")
+
+    foreach(ResourceFile IN LISTS ER_RESOURCES)
+        get_filename_component(ResourceName ${ResourceFile} NAME)
+        string(REGEX REPLACE "[^a-zA-Z0-9]" "_" BinarySymbol ${ResourceName})
+
+        get_filename_component(BaseName ${ResourceFile} NAME_WE)
+        get_filename_component(Extension ${ResourceFile} EXT)
+        string(REPLACE "." "" Extension ${Extension})
+        string(REPLACE "_" ";" BaseParts ${BaseName})
+        set(CamelBaseName "")
+        foreach(Part IN LISTS BaseParts)
+            if(Part)
+                string(REPLACE "-" ";" HyphenParts ${Part})
+                foreach(HyphenPart IN LISTS HyphenParts)
+                    if(HyphenPart)
+                        string(SUBSTRING ${HyphenPart} 0 1 FirstChar)
+                        string(TOUPPER ${FirstChar} FirstChar)
+                        string(SUBSTRING ${HyphenPart} 1 -1 RestChars)
+                        string(TOLOWER ${RestChars} RestChars)
+                        string(APPEND CamelBaseName "${FirstChar}${RestChars}")
+                    endif()
+                endforeach()
+            endif()
+        endforeach()
+        string(TOUPPER ${Extension} UpperExtension)
+        set(FunctionName "${CamelBaseName}${UpperExtension}")
+
+        file(SIZE "${ER_RESOURCE_DIR}/${ResourceFile}" FileSize)
+        file(APPEND "${MANIFEST_FILE}" "Resource: ${ResourceFile}\n")
+        file(APPEND "${MANIFEST_FILE}" "  Path: ${ER_RESOURCE_DIR}/${ResourceFile}\n")
+        file(APPEND "${MANIFEST_FILE}" "  Size: ${FileSize} bytes\n")
+        file(APPEND "${MANIFEST_FILE}" "  Symbol: ${BinarySymbol}\n")
+        file(APPEND "${MANIFEST_FILE}" "  Functions:\n")
+        file(APPEND "${MANIFEST_FILE}" "    - ${ER_NAMESPACE}::get${FunctionName}Data() -> const uint8_t*\n")
+        file(APPEND "${MANIFEST_FILE}" "    - ${ER_NAMESPACE}::get${FunctionName}Size() -> uint32_t\n")
+        file(APPEND "${MANIFEST_FILE}" "\n")
+    endforeach()
+
+    # Add custom target to display manifest
+    add_custom_target(${ER_TARGET}-manifest
+        COMMAND ${CMAKE_COMMAND} -E echo "=== Resource Manifest: ${MANIFEST_FILE} ==="
+        COMMAND ${CMAKE_COMMAND} -E cat "${MANIFEST_FILE}"
+        VERBATIM
+        COMMENT "Displaying resource manifest for ${ER_TARGET}"
+    )
 
     if(WIN32)
         _embed_resources_windows(
@@ -101,6 +299,7 @@ function(_embed_resources_windows)
     set(RESOURCE_ENTRIES "")
     set(RESOURCE_ID_DEFINITIONS "")
     set(ACCESSOR_FUNCTIONS "")
+    set(SAFE_ACCESSOR_FUNCTIONS "")
     set(BINARY_SYMBOLS "")
 
     set(ID_COUNTER 1)
@@ -164,6 +363,21 @@ function(_embed_resources_windows)
         string(APPEND ACCESSOR_FUNCTIONS "    return SizeofResource(nullptr, hResource);\n")
         string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
 
+        # Safe accessor functions (Windows)
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Safe() -> resource_tools::ResourceResult {\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    HRSRC hResource = FindResource(nullptr, MAKEINTRESOURCE(k${ResourceIdUpper}), RT_RCDATA);\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    if (hResource == nullptr) {\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "        return {nullptr, 0, resource_tools::ResourceError::NotFound};\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    }\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    HGLOBAL hMemory = LoadResource(nullptr, hResource);\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    if (hMemory == nullptr) {\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "        return {nullptr, 0, resource_tools::ResourceError::NotFound};\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    }\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    auto* data = static_cast<const uint8_t*>(LockResource(hMemory));\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    DWORD size = SizeofResource(nullptr, hResource);\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    return {data, static_cast<size_t>(size), resource_tools::ResourceError::Success};\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "}\n\n")
+
         # Binary symbol compatibility
         string(APPEND BINARY_SYMBOLS "inline const uint8_t* const ${BinarySymbolName}_ptr = get${FunctionName}Data();\n")
         string(APPEND BINARY_SYMBOLS "#define ${BinarySymbolName} (*${BinarySymbolName}_ptr)\n\n")
@@ -223,6 +437,7 @@ function(_embed_resources_unix)
     set(DataObjectFiles "")
     set(EXTERN_DECLARATIONS "")
     set(ACCESSOR_FUNCTIONS "")
+    set(SAFE_ACCESSOR_FUNCTIONS "")
 
     foreach(ResourceFile IN LISTS ER_RESOURCES)
         get_filename_component(ResourceName ${ResourceFile} NAME)
@@ -320,6 +535,11 @@ function(_embed_resources_unix)
         string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Data() -> const uint8_t* {\n")
         string(APPEND ACCESSOR_FUNCTIONS "    return &${HeaderSymbolName}_start;\n")
         string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
+
+        # Safe accessor functions (Unix)
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Safe() -> resource_tools::ResourceResult {\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "    return resource_tools::getResourceSafe(&${HeaderSymbolName}_start, &${HeaderSymbolName}_end);\n")
+        string(APPEND SAFE_ACCESSOR_FUNCTIONS "}\n\n")
     endforeach()
 
     # Configure template

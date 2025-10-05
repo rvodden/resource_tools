@@ -2,11 +2,13 @@
 #define @NAMESPACE_UPPER@_EMBEDDED_DATA_H
 
 #include <cstdint>
+#include <resource_tools/embedded_resource.h>
 
 namespace @ER_NAMESPACE@ {
 
 @EXTERN_DECLARATIONS@
 @ACCESSOR_FUNCTIONS@
+@SAFE_ACCESSOR_FUNCTIONS@
 } // namespace @ER_NAMESPACE@
 
 #endif // @NAMESPACE_UPPER@_EMBEDDED_DATA_H

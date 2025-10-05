@@ -3,11 +3,13 @@
 
 #include <cstdint>
 #include <windows.h>
+#include <resource_tools/embedded_resource.h>
 #include "resource_ids.h"
 
 namespace @ER_NAMESPACE@ {
 
 @ACCESSOR_FUNCTIONS@
+@SAFE_ACCESSOR_FUNCTIONS@
 // Cross-platform binary symbol compatibility
 @BINARY_SYMBOLS@
 } // namespace @ER_NAMESPACE@

@@ -11,9 +11,11 @@ A cross-platform CMake library for embedding binary resources into C++ applicati
 - 🔧 **Cross-platform**: Works on Windows (RC files) and Unix/Linux (object files)
 - 📦 **Easy to use**: Simple CMake function to embed any files
 - 🎯 **Type-safe**: Generates clean C++ functions with proper types
+- 🛡️ **Safe by default**: Comprehensive error handling with `ResourceResult` API
 - 🔄 **Template-based**: Maintainable code generation
 - 📱 **Header-only**: No runtime dependencies
 - 🧪 **Well-tested**: Comprehensive test suite including installation tests
+- 🔒 **Secure**: Input validation, path sanitization, and bounds checking
 
 ## Quick Start
 
@@ -88,23 +90,30 @@ add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE my_app-data resource_tools::resource_tools)
 ```
 
-3. **Use in C++ code:**
+3. **Use in C++ code (Safe API):**
 
 ```cpp
 #include <my_resources/embedded_data.h>
 
 int main() {
-    // Access embedded resources
-    auto* logo_data = my_resources::getLogoPNGData();
-    auto logo_size = my_resources::getLogoPNGSize();
+    // Safe access with error handling
+    auto result = my_resources::getLogoPNGSafe();
 
-    auto* font_data = my_resources::getFontTTFData();
-    auto font_size = my_resources::getFontTTFSize();
+    if (result) {
+        const uint8_t* data = result.data;
+        size_t size = result.size;
+        // Use data safely...
+    } else {
+        std::cerr << "Failed: " << result.error_message() << "\n";
+        return 1;
+    }
 
-    // Use the data...
     return 0;
 }
 ```
+
+> **Note:** The legacy unsafe API (`getData()`, `getSize()`) is still available but deprecated.
+> See [ERROR_HANDLING.md](ERROR_HANDLING.md) for migration guide.
 
 ## API Reference
 
@@ -150,19 +159,47 @@ namespace your_namespace {
 - `tic_tac_toe.png` → `getTicTacToePNGData()` / `getTicTacToePNGSize()`
 - `PressStart2P-Regular.ttf` → `getPressstart2pRegularTTFData()` / `getPressstart2pRegularTTFSize()`
 
-### Utility Functions
+### Safe API Functions
 
 ```cpp
 #include <resource_tools/embedded_resource.h>
 
-namespace resource_tools {
-    // Get resource data (identity function for consistency)
-    auto getResourceData(const uint8_t* start) -> const uint8_t*;
+namespace your_namespace {
+    // Safe accessor with error handling (recommended)
+    auto getFileNameEXTSafe() -> resource_tools::ResourceResult;
+}
 
-    // Calculate resource size from start/end pointers (Unix only)
-    auto getResourceSize(const uint8_t* start, const uint8_t* end) -> uint32_t;
+namespace resource_tools {
+    // Safe utility function with error handling
+    auto getResourceSafe(const uint8_t* start, const uint8_t* end) -> ResourceResult;
+
+    // Error result type
+    struct ResourceResult {
+        const uint8_t* data;
+        size_t size;
+        ResourceError error;
+
+        explicit operator bool() const;  // Check if successful
+        auto error_message() const -> const char*;
+    };
+
+    // Error codes
+    enum class ResourceError {
+        Success, NullPointer, InvalidSize, IntegerOverflow, NotFound
+    };
 }
 ```
+
+### Legacy API (Deprecated)
+
+```cpp
+namespace resource_tools {
+    [[deprecated]] auto getResourceData(const uint8_t* start) -> const uint8_t*;
+    [[deprecated]] auto getResourceSize(const uint8_t* start, const uint8_t* end) -> uint32_t;
+}
+```
+
+> **Migration:** Use `getResourceSafe()` instead. See [ERROR_HANDLING.md](ERROR_HANDLING.md) for details.
 
 ## Examples
 

@@ -6,7 +6,10 @@ embed_resources(
     NAMESPACE test_resources
 )
 
-add_executable(resource_tools_test resource_tools_test.cpp)
+add_executable(resource_tools_test
+    resource_tools_test.cpp
+    error_handling_test.cpp
+)
 
 # Include the resource_tools library
 target_link_libraries(resource_tools_test PRIVATE resource_tools)
