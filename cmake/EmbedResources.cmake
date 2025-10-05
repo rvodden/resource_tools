@@ -269,19 +269,19 @@ function(_embed_resources_unix)
 
         # Platform-specific linker commands
         if(APPLE)
-            # macOS assembler adds underscore prefix automatically, so use name without prefix in assembly
-            set(AsmSymbolName "binary_${BinarySymbol}")
+            # macOS: Use explicit underscore in assembly to prevent assembler from adding another
+            # Assembly declares _binary_* which stays as _binary_* in object file
             # macOS: Generate assembly file and assemble it
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
             add_custom_command(
                 OUTPUT ${OutFile}
                 MAIN_DEPENDENCY ${FullResourcePath}
                 COMMAND ${CMAKE_COMMAND} -E echo ".section __DATA,__const" > ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${AsmSymbolName}_start" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo "${AsmSymbolName}_start:" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${BinarySymbolName}_start" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo "${BinarySymbolName}_start:" >> ${AsmFile}
                 COMMAND ${CMAKE_COMMAND} -E echo ".incbin \\\"${FullResourcePath}\\\"" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${AsmSymbolName}_end" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo "${AsmSymbolName}_end:" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo ".globl ${BinarySymbolName}_end" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo "${BinarySymbolName}_end:" >> ${AsmFile}
                 COMMAND as -o ${OutFile} ${AsmFile}
                 DEPENDS ${FullResourcePath}
                 WORKING_DIRECTORY ${ER_RESOURCE_DIR}
@@ -299,14 +299,9 @@ function(_embed_resources_unix)
         endif()
         list(APPEND DataObjectFiles ${OutFile})
 
-        # External symbol declarations - use platform-specific name for header
-        # On macOS, C++ compiler adds underscore prefix, so header declares without it
-        # On Linux, header declares with underscore to match GNU ld output
-        if(APPLE)
-            set(HeaderSymbolName "binary_${BinarySymbol}")
-        else()
-            set(HeaderSymbolName "${BinarySymbolName}")
-        endif()
+        # External symbol declarations
+        # Both platforms now use _binary_* symbols
+        set(HeaderSymbolName "${BinarySymbolName}")
 
         string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${HeaderSymbolName}_start;\n")
         string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${HeaderSymbolName}_end;\n\n")

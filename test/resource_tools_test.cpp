@@ -47,13 +47,7 @@ TEST_F(ResourceToolsTest, ResourceSizeUtility) {
 #ifndef _WIN32
     // On Unix systems, we can test the size calculation utility
     // Note: We can't easily test this on Windows without access to end pointers
-#ifdef __APPLE__
-    // macOS: header declares symbols without underscore (C++ compiler adds it)
-    auto calculated_size = resource_tools::getResourceSize(&test_resources::binary_test_file_txt_start, &test_resources::binary_test_file_txt_end);
-#else
-    // Linux: header declares symbols with underscore
     auto calculated_size = resource_tools::getResourceSize(&test_resources::_binary_test_file_txt_start, &test_resources::_binary_test_file_txt_end);
-#endif
     EXPECT_EQ(calculated_size, size);
 #endif
 }
@@ -71,20 +65,10 @@ TEST_F(ResourceToolsTest, ResourceSizesAreCorrect) {
 // Test cross-platform binary symbol access (Unix-style symbols)
 TEST_F(ResourceToolsTest, BinarySymbolAccess) {
     // Test that we can access the binary symbols directly
-#ifdef __APPLE__
-    // macOS: header declares symbols without underscore (C++ compiler adds it)
-    std::string txt_content(reinterpret_cast<const char*>(&test_resources::binary_test_file_txt_start), 22);
-    EXPECT_EQ(txt_content, "Hello, Resource Tools!");
-
-    std::string bin_content(reinterpret_cast<const char*>(&test_resources::binary_binary_data_bin_start), 10);
-    EXPECT_EQ(bin_content, "TESTBINARY");
-#else
-    // Linux: header declares symbols with underscore
     std::string txt_content(reinterpret_cast<const char*>(&test_resources::_binary_test_file_txt_start), 22);
     EXPECT_EQ(txt_content, "Hello, Resource Tools!");
 
     std::string bin_content(reinterpret_cast<const char*>(&test_resources::_binary_binary_data_bin_start), 10);
     EXPECT_EQ(bin_content, "TESTBINARY");
-#endif
 }
 #endif
