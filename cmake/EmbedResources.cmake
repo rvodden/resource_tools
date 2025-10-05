@@ -221,6 +221,10 @@ function(embed_resources)
         get_filename_component(BaseName ${ResourceFile} NAME_WE)
         get_filename_component(Extension ${ResourceFile} EXT)
         string(REPLACE "." "" Extension ${Extension})
+
+        # Sanitize basename: replace spaces and other invalid chars with underscores
+        string(REGEX REPLACE "[^a-zA-Z0-9_-]" "_" BaseName "${BaseName}")
+
         string(REPLACE "_" ";" BaseParts ${BaseName})
         set(CamelBaseName "")
         foreach(Part IN LISTS BaseParts)
@@ -312,6 +316,9 @@ function(_embed_resources_windows)
         get_filename_component(BaseName ${ResourceFile} NAME_WE)
         get_filename_component(Extension ${ResourceFile} EXT)
         string(REPLACE "." "" Extension ${Extension})
+
+        # Sanitize basename: replace spaces and other invalid chars with underscores
+        string(REGEX REPLACE "[^a-zA-Z0-9_-]" "_" BaseName "${BaseName}")
 
         # Convert to proper camelCase
         # Split basename by underscores and hyphens, then capitalize each part
@@ -447,6 +454,9 @@ function(_embed_resources_unix)
         get_filename_component(BaseName ${ResourceFile} NAME_WE)
         get_filename_component(Extension ${ResourceFile} EXT)
         string(REPLACE "." "" Extension ${Extension})
+
+        # Sanitize basename: replace spaces and other invalid chars with underscores
+        string(REGEX REPLACE "[^a-zA-Z0-9_-]" "_" BaseName "${BaseName}")
 
         # Convert to proper camelCase
         # Split basename by underscores and hyphens, then capitalize each part

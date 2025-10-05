@@ -6,16 +6,34 @@ embed_resources(
     NAMESPACE test_resources
 )
 
+# Edge case resources - test boundary conditions
+embed_resources(
+    TARGET edge_case_test
+    RESOURCES
+        empty_file.dat
+        large_file.bin
+        "test file with spaces.txt"
+        "файл.txt"
+        archive.tar.gz
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt
+    RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
+    NAMESPACE edge_case_resources
+)
+
 add_executable(resource_tools_test
     resource_tools_test.cpp
     error_handling_test.cpp
+    boundary_conditions_test.cpp
 )
 
 # Include the resource_tools library
 target_link_libraries(resource_tools_test PRIVATE resource_tools)
 
 # Link the embedded data
-target_link_libraries(resource_tools_test PRIVATE resource_tools_test-data)
+target_link_libraries(resource_tools_test PRIVATE
+    resource_tools_test-data
+    edge_case_test-data
+)
 
 # Add GoogleTest (fetched by parent CMakeLists.txt)
 target_link_libraries(resource_tools_test PRIVATE GTest::gtest GTest::gtest_main)
