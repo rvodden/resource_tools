@@ -281,7 +281,7 @@ function(_embed_resources_unix)
                 COMMAND ${CMAKE_COMMAND} -E echo ".section __DATA,__const" > ${AsmFile}
                 COMMAND ${CMAKE_COMMAND} -E echo ".globl ${AsmSymbolName}_start" >> ${AsmFile}
                 COMMAND ${CMAKE_COMMAND} -E echo "${AsmSymbolName}_start:" >> ${AsmFile}
-                COMMAND ${CMAKE_COMMAND} -E echo ".incbin \\\"${FullResourcePath}\\\"" >> ${AsmFile}
+                COMMAND ${CMAKE_COMMAND} -E echo ".incbin \"${ResourceFile}\"" >> ${AsmFile}
                 COMMAND ${CMAKE_COMMAND} -E echo ".globl ${AsmSymbolName}_end" >> ${AsmFile}
                 COMMAND ${CMAKE_COMMAND} -E echo "${AsmSymbolName}_end:" >> ${AsmFile}
                 COMMAND as -o ${OutFile} ${AsmFile}
