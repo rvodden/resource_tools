@@ -114,6 +114,8 @@ TEST_F(BoundaryConditionsTest, FilenameWithSpacesGeneratesValidSymbol) {
     SUCCEED();
 }
 
+#ifndef _WIN32
+// Windows RC compiler doesn't support Unicode filenames
 TEST_F(BoundaryConditionsTest, UnicodeFilenameWorks) {
     // Unicode chars get sanitized to underscores, leaving just extension
     auto result = edge_case_resources::getTXTSafe();
@@ -124,6 +126,7 @@ TEST_F(BoundaryConditionsTest, UnicodeFilenameWorks) {
     std::string content(reinterpret_cast<const char*>(result.data), result.size);
     EXPECT_EQ(content, "unicode test\n");
 }
+#endif
 
 // ============================================================================
 // MULTIPLE DOTS IN FILENAME TESTS

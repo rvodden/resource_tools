@@ -7,15 +7,22 @@ embed_resources(
 )
 
 # Edge case resources - test boundary conditions
+# Note: Unicode filenames excluded on Windows due to RC compiler limitations
+set(EDGE_CASE_RESOURCES
+    empty_file.dat
+    large_file.bin
+    "test file with spaces.txt"
+    archive.tar.gz
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt
+)
+
+if(NOT WIN32)
+    list(APPEND EDGE_CASE_RESOURCES "файл.txt")
+endif()
+
 embed_resources(
     TARGET edge_case_test
-    RESOURCES
-        empty_file.dat
-        large_file.bin
-        "test file with spaces.txt"
-        "файл.txt"
-        archive.tar.gz
-        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt
+    RESOURCES ${EDGE_CASE_RESOURCES}
     RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data
     NAMESPACE edge_case_resources
 )
