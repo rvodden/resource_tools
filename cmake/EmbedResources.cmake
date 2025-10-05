@@ -195,9 +195,14 @@ function(_embed_resources_windows)
 
     # Create the library
     add_library(${ER_LIBRARY_NAME} OBJECT ${RC_FILE})
+
+    # Set RC file include directories - both target property and source property for compatibility
     set_target_properties(${ER_LIBRARY_NAME} PROPERTIES
         LINKER_LANGUAGE RC
-        RC_INCLUDE_DIRECTORIES "${ER_HEADER_OUTPUT_DIR}")
+        INCLUDE_DIRECTORIES "${ER_HEADER_OUTPUT_DIR}")
+
+    set_source_files_properties(${RC_FILE} PROPERTIES
+        INCLUDE_DIRECTORIES "${ER_HEADER_OUTPUT_DIR}")
 
     # Make the generated headers available
     target_include_directories(${ER_LIBRARY_NAME} PUBLIC
@@ -258,10 +263,11 @@ function(_embed_resources_unix)
         # Generate binary symbol name
         string(REGEX REPLACE "\\." "_" BinarySymbol ${ResourceName})
         string(REGEX REPLACE "[^a-zA-Z0-9_]" "_" BinarySymbol ${BinarySymbol})
-        set(BinarySymbolName "_binary_${BinarySymbol}")
 
         # Platform-specific linker commands
         if(APPLE)
+            # macOS assembler adds underscore prefix automatically, so don't include it
+            set(BinarySymbolName "binary_${BinarySymbol}")
             # macOS: Generate assembly file and assemble it
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
             add_custom_command(
@@ -278,7 +284,8 @@ function(_embed_resources_unix)
                 WORKING_DIRECTORY ${ER_RESOURCE_DIR}
             )
         else()
-            # Linux/Unix uses GNU ld
+            # Linux/Unix uses GNU ld with underscore prefix
+            set(BinarySymbolName "_binary_${BinarySymbol}")
             add_custom_command(
                 OUTPUT ${OutFile}
                 MAIN_DEPENDENCY ${FullResourcePath}
