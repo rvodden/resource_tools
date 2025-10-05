@@ -299,17 +299,25 @@ function(_embed_resources_unix)
         endif()
         list(APPEND DataObjectFiles ${OutFile})
 
-        # External symbol declarations
-        string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${BinarySymbolName}_start;\n")
-        string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${BinarySymbolName}_end;\n\n")
+        # External symbol declarations - use platform-specific name for header
+        # On macOS, C++ compiler adds underscore prefix, so header declares without it
+        # On Linux, header declares with underscore to match GNU ld output
+        if(APPLE)
+            set(HeaderSymbolName "binary_${BinarySymbol}")
+        else()
+            set(HeaderSymbolName "${BinarySymbolName}")
+        endif()
+
+        string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${HeaderSymbolName}_start;\n")
+        string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${HeaderSymbolName}_end;\n\n")
 
         # Accessor functions with better names
         string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Size() -> uint32_t {\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    return static_cast<uint32_t>(&${BinarySymbolName}_end - &${BinarySymbolName}_start);\n")
+        string(APPEND ACCESSOR_FUNCTIONS "    return static_cast<uint32_t>(&${HeaderSymbolName}_end - &${HeaderSymbolName}_start);\n")
         string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
 
         string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Data() -> const uint8_t* {\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    return &${BinarySymbolName}_start;\n")
+        string(APPEND ACCESSOR_FUNCTIONS "    return &${HeaderSymbolName}_start;\n")
         string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
     endforeach()
 
