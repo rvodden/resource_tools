@@ -7,64 +7,25 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test-linux:
-    name: Test on Linux
-    runs-on: ubuntu-latest
+  test:
+    name: Test
     strategy:
       matrix:
-        build_type: [Debug, Release]
-        compiler:
-          - { cc: gcc-12, cxx: g++-12 }
-          # - { cc: clang-15, cxx: clang++-15 }
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build
-
-      - name: Configure CMake
-        env:
-          CC: ${{ matrix.compiler.cc }}
-          CXX: ${{ matrix.compiler.cxx }}
-        run: |
-          cmake -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DRESOURCE_TOOLS_BUILD_TESTS=ON
-
-      - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }}
-
-      - name: Show All Files
-        run: |
-          echo "All files in build directory:"
-          find build -type f
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }}
-
-  test-windows:
-    name: Test on Windows
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        build_type: [Debug, Release]
-
+        build_type:
+          - Debug
+          - Release
+        platform:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Configure CMake
         run: |
-          cmake -B build `
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-            -DRESOURCE_TOOLS_BUILD_TESTS=ON
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DRESOURCE_TOOLS_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}
@@ -73,32 +34,104 @@ jobs:
         run: |
           cd build
           ctest --output-on-failure --build-config ${{ matrix.build_type }}
-          
-  test-macos:
-    name: Test on macOS
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        build_type: [Debug, Release]
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # name: Create Release Tag
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   permissions:
+  #     contents: write
 
-      - name: Install dependencies
-        run: brew install ninja
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0  # Fetch all history for proper versioning
 
-      - name: Configure CMake
-        run: |
-          cmake -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DRESOURCE_TOOLS_BUILD_TESTS=ON
+  #     - name: Get version from CMakeLists.txt
+  #       id: get_version
+  #       run: |
+  #         VERSION=$(grep -oP 'project\(resource_tools[^)]*VERSION\s+\K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt || echo "")
+  #         if [ -z "$VERSION" ]; then
+  #           echo "No version found in CMakeLists.txt, using 0.1.0"
+  #           VERSION="0.1.0"
+  #         fi
+  #         echo "version=$VERSION" >> $GITHUB_OUTPUT
+  #         echo "Found version: $VERSION"
 
-      - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }}
+  #     - name: Check if tag exists
+  #       id: check_tag
+  #       run: |
+  #         TAG="v${{ steps.get_version.outputs.version }}"
+  #         if git rev-parse "$TAG" >/dev/null 2>&1; then
+  #           echo "exists=true" >> $GITHUB_OUTPUT
+  #           echo "Tag $TAG already exists"
+  #         else
+  #           echo "exists=false" >> $GITHUB_OUTPUT
+  #           echo "Tag $TAG does not exist"
+  #         fi
 
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure --build-config ${{ matrix.build_type }} 
+  #     - name: Get commit messages since last tag
+  #       if: steps.check_tag.outputs.exists == 'false'
+  #       id: changelog
+  #       run: |
+  #         LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+  #         if [ -z "$LAST_TAG" ]; then
+  #           COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+  #         else
+  #           COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+  #         fi
+  #         echo "changelog<<EOF" >> $GITHUB_OUTPUT
+  #         echo "$COMMITS" >> $GITHUB_OUTPUT
+  #         echo "EOF" >> $GITHUB_OUTPUT
+
+  #     - name: Create Release
+  #       if: steps.check_tag.outputs.exists == 'false'
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: v${{ steps.get_version.outputs.version }}
+  #         release_name: Release v${{ steps.get_version.outputs.version }}
+  #         body: |
+  #           ## Changes
+
+  #           ${{ steps.changelog.outputs.changelog }}
+
+  #           ## Installation
+
+  #           ### Using CMake FetchContent
+
+  #           ```cmake
+  #           include(FetchContent)
+  #           FetchContent_Declare(
+  #               resource_tools
+  #               GIT_REPOSITORY https://github.com/${{ github.repository }}.git
+  #               GIT_TAG v${{ steps.get_version.outputs.version }}
+  #           )
+  #           FetchContent_MakeAvailable(resource_tools)
+  #           ```
+
+  #           ### Using Git Submodule
+
+  #           ```bash
+  #           git submodule add -b v${{ steps.get_version.outputs.version }} https://github.com/${{ github.repository }}.git third_party/resource_tools
+  #           ```
+
+  #           ### System Installation
+
+  #           ```bash
+  #           git clone -b v${{ steps.get_version.outputs.version }} https://github.com/${{ github.repository }}.git
+  #           cd resource_tools
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Release
+  #           cmake --build build
+  #           sudo cmake --install build
+  #           ```
+  #         draft: false
+  #         prerelease: false
+
+  #     - name: Tag already exists
+  #       if: steps.check_tag.outputs.exists == 'true'
+  #       run: |
+  #         echo "Tag v${{ steps.get_version.outputs.version }} already exists. Update version in CMakeLists.txt to create a new release."
+  #         echo "Current commits since last tag:"
+  #         git log $(git describe --tags --abbrev=0)..HEAD --oneline
