@@ -209,7 +209,11 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsSameResource) {
 }
 
 TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
+#ifdef _WIN32
+    constexpr int num_threads = 6;  // Skip unicode threads on Windows
+#else
     constexpr int num_threads = 8;
+#endif
     std::atomic<int> total_success{0};
     std::vector<std::thread> threads;
 
@@ -237,7 +241,9 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
         });
     }
 
+#ifndef _WIN32
     // Thread 5-6: Read unicode file (sanitized to getTXTSafe())
+    // Skipped on Windows due to RC compiler limitations
     for (int i = 0; i < 2; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < 500; ++j) {
@@ -248,6 +254,7 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
             }
         });
     }
+#endif
 
     // Thread 7-8: Read archive file
     for (int i = 0; i < 2; ++i) {
