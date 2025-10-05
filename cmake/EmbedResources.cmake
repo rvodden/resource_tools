@@ -308,17 +308,16 @@ function(_embed_resources_windows)
 
     # Generate unique base ID for this target to avoid duplicate resource IDs
     # when multiple embed_resources() targets are linked together
-    # Use a simple counter-based approach: increment a global property
-    get_property(GLOBAL_RC_COUNTER GLOBAL PROPERTY RESOURCE_TOOLS_RC_ID_COUNTER)
-    if(NOT GLOBAL_RC_COUNTER)
-        set(GLOBAL_RC_COUNTER 100)  # Start from 100 to avoid conflicts
+    # Use cache variable to persist counter across embed_resources() calls
+    if(NOT DEFINED RESOURCE_TOOLS_RC_ID_COUNTER)
+        set(RESOURCE_TOOLS_RC_ID_COUNTER 100 CACHE INTERNAL "Resource ID counter for Windows RC files")
     endif()
-    set(ID_COUNTER ${GLOBAL_RC_COUNTER})
+    set(ID_COUNTER ${RESOURCE_TOOLS_RC_ID_COUNTER})
 
-    # Reserve ID range for this target (estimate: num_resources * 10 for safety)
+    # Reserve ID range for this target
     list(LENGTH ER_RESOURCES NUM_RESOURCES)
-    math(EXPR NEXT_COUNTER "${GLOBAL_RC_COUNTER} + ${NUM_RESOURCES} + 100")
-    set_property(GLOBAL PROPERTY RESOURCE_TOOLS_RC_ID_COUNTER ${NEXT_COUNTER})
+    math(EXPR NEXT_COUNTER "${RESOURCE_TOOLS_RC_ID_COUNTER} + ${NUM_RESOURCES} + 10")
+    set(RESOURCE_TOOLS_RC_ID_COUNTER ${NEXT_COUNTER} CACHE INTERNAL "Resource ID counter for Windows RC files" FORCE)
     foreach(ResourceFile IN LISTS ER_RESOURCES)
         get_filename_component(ResourceName ${ResourceFile} NAME)
         string(REGEX REPLACE "[^a-zA-Z0-9]" "_" ResourceId ${ResourceName})
