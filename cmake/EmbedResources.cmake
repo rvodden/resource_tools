@@ -308,12 +308,17 @@ function(_embed_resources_windows)
 
     # Generate unique base ID for this target to avoid duplicate resource IDs
     # when multiple embed_resources() targets are linked together
-    string(MD5 TARGET_HASH "${ER_TARGET}")
-    string(SUBSTRING "${TARGET_HASH}" 0 4 TARGET_HASH_SHORT)
-    # Convert hex to decimal (use first 4 chars = max 65535)
-    math(EXPR ID_BASE "0x${TARGET_HASH_SHORT}")
-    # Start from base + 1 to ensure uniqueness
-    set(ID_COUNTER ${ID_BASE})
+    # Use a simple counter-based approach: increment a global property
+    get_property(GLOBAL_RC_COUNTER GLOBAL PROPERTY RESOURCE_TOOLS_RC_ID_COUNTER)
+    if(NOT GLOBAL_RC_COUNTER)
+        set(GLOBAL_RC_COUNTER 100)  # Start from 100 to avoid conflicts
+    endif()
+    set(ID_COUNTER ${GLOBAL_RC_COUNTER})
+
+    # Reserve ID range for this target (estimate: num_resources * 10 for safety)
+    list(LENGTH ER_RESOURCES NUM_RESOURCES)
+    math(EXPR NEXT_COUNTER "${GLOBAL_RC_COUNTER} + ${NUM_RESOURCES} + 100")
+    set_property(GLOBAL PROPERTY RESOURCE_TOOLS_RC_ID_COUNTER ${NEXT_COUNTER})
     foreach(ResourceFile IN LISTS ER_RESOURCES)
         get_filename_component(ResourceName ${ResourceFile} NAME)
         string(REGEX REPLACE "[^a-zA-Z0-9]" "_" ResourceId ${ResourceName})
