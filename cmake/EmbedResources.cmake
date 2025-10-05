@@ -269,10 +269,11 @@ function(_embed_resources_unix)
 
         # Platform-specific linker commands
         if(APPLE)
-            # macOS: assembler ALWAYS adds underscore prefix to symbols
-            # So assembly declares "binary_*" which becomes "_binary_*" in object file
-            # C++ declares "binary_*" with extern "C", compiler looks for "_binary_*"
-            set(AsmSymbolName "binary_${BinarySymbol}")
+            # macOS: The toolchain adds underscore prefix automatically
+            # C++ extern "C" "_binary_*" -> compiler looks for "__binary_*"
+            # Assembly declares "_binary_*" -> assembler produces "__binary_*"
+            # So both C++ and assembly use the SAME name with single underscore
+            set(AsmSymbolName "${BinarySymbolName}")
             # macOS: Generate assembly file and assemble it
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
             # Create a CMake script to generate the assembly file with ABSOLUTE path to resource
@@ -300,8 +301,8 @@ function(_embed_resources_unix)
         list(APPEND DataObjectFiles ${OutFile})
 
         # External symbol declarations
-        # macOS: Header declares without underscore, assembler/compiler adds it
-        # Linux: Header declares with underscore to match GNU ld output
+        # macOS: Assembly declares _binary_*, compiler adds another _ -> header needs binary_* (no underscore)
+        # Linux: GNU ld generates _binary_*, no compiler prefix -> header needs _binary_* (with underscore)
         if(APPLE)
             set(HeaderSymbolName "binary_${BinarySymbol}")
         else()

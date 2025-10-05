@@ -74,32 +74,31 @@ jobs:
           cd build
           ctest --output-on-failure --build-config ${{ matrix.build_type }}
           
-  # test-macos:
-  #   name: Test on macOS
-  #   runs-on: macos-latest
-  #   strategy:
-  #     matrix:
-  #       build_type: [Debug, Release]
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Install dependencies
-  #       run: brew install ninja
+      - name: Install dependencies
+        run: brew install ninja
 
-  #     - name: Configure CMake
-  #       run: |
-  #         cmake -B build \
-  #           -G Ninja \
-  #           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-  #           -DRESOURCE_TOOLS_BUILD_TESTS=ON
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DRESOURCE_TOOLS_BUILD_TESTS=ON
 
-  #     - name: Build
-  #       run: cmake --build build --config ${{ matrix.build_type }}
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
 
-  #     - name: Run tests
-  #       run: |
-  #         cd build
-  #         ctest --output-on-failure --build-config ${{ matrix.build_type }} -E install_resource_tools
-          
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure --build-config ${{ matrix.build_type }} 

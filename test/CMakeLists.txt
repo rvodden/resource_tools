@@ -12,17 +12,7 @@ add_executable(resource_tools_test resource_tools_test.cpp)
 target_link_libraries(resource_tools_test PRIVATE resource_tools)
 
 # Link the embedded data
-# On macOS, force load all symbols from the static library to ensure resource symbols are included
-if(APPLE)
-    # Add dependency to ensure headers are generated first
-    add_dependencies(resource_tools_test resource_tools_test-data)
-    # Manually add include directories since -Wl,-force_load doesn't propagate them
-    target_include_directories(resource_tools_test PRIVATE
-        $<TARGET_PROPERTY:resource_tools_test-data,INTERFACE_INCLUDE_DIRECTORIES>)
-    target_link_libraries(resource_tools_test PRIVATE -Wl,-force_load,$<TARGET_FILE:resource_tools_test-data>)
-else()
-    target_link_libraries(resource_tools_test PRIVATE resource_tools_test-data)
-endif()
+target_link_libraries(resource_tools_test PRIVATE resource_tools_test-data)
 
 # Add GoogleTest (fetched by parent CMakeLists.txt)
 target_link_libraries(resource_tools_test PRIVATE GTest::gtest GTest::gtest_main)
