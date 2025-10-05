@@ -12,7 +12,12 @@ add_executable(resource_tools_test resource_tools_test.cpp)
 target_link_libraries(resource_tools_test PRIVATE resource_tools)
 
 # Link the embedded data
-target_link_libraries(resource_tools_test PRIVATE resource_tools_test-data)
+# On macOS, force load all symbols from the static library to ensure resource symbols are included
+if(APPLE)
+    target_link_libraries(resource_tools_test PRIVATE -Wl,-force_load,$<TARGET_FILE:resource_tools_test-data>)
+else()
+    target_link_libraries(resource_tools_test PRIVATE resource_tools_test-data)
+endif()
 
 # Add GoogleTest (fetched by parent CMakeLists.txt)
 target_link_libraries(resource_tools_test PRIVATE GTest::gtest GTest::gtest_main)
