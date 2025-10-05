@@ -276,8 +276,9 @@ function(_embed_resources_unix)
             # macOS: Generate assembly file and assemble it
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
             # Create a CMake script to generate the assembly file with ABSOLUTE path to resource
+            # macOS assembler syntax: use .global (not .globl) and ensure proper symbol visibility
             set(GenScript "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}_gen.cmake")
-            file(WRITE ${GenScript} "file(WRITE \"${AsmFile}\" \".section __DATA,__const\\n.globl ${AsmSymbolName}_start\\n${AsmSymbolName}_start:\\n.incbin \\\"${FullResourcePath}\\\"\\n.globl ${AsmSymbolName}_end\\n${AsmSymbolName}_end:\\n\")")
+            file(WRITE ${GenScript} "file(WRITE \"${AsmFile}\" \".section __DATA,__const\\n.global ${AsmSymbolName}_start\\n${AsmSymbolName}_start:\\n.incbin \\\"${FullResourcePath}\\\"\\n.global ${AsmSymbolName}_end\\n${AsmSymbolName}_end:\\n\")")
             add_custom_command(
                 OUTPUT ${OutFile}
                 MAIN_DEPENDENCY ${FullResourcePath}
