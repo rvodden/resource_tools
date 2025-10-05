@@ -306,7 +306,14 @@ function(_embed_resources_windows)
     set(SAFE_ACCESSOR_FUNCTIONS "")
     set(BINARY_SYMBOLS "")
 
-    set(ID_COUNTER 1)
+    # Generate unique base ID for this target to avoid duplicate resource IDs
+    # when multiple embed_resources() targets are linked together
+    string(MD5 TARGET_HASH "${ER_TARGET}")
+    string(SUBSTRING "${TARGET_HASH}" 0 4 TARGET_HASH_SHORT)
+    # Convert hex to decimal (use first 4 chars = max 65535)
+    math(EXPR ID_BASE "0x${TARGET_HASH_SHORT}")
+    # Start from base + 1 to ensure uniqueness
+    set(ID_COUNTER ${ID_BASE})
     foreach(ResourceFile IN LISTS ER_RESOURCES)
         get_filename_component(ResourceName ${ResourceFile} NAME)
         string(REGEX REPLACE "[^a-zA-Z0-9]" "_" ResourceId ${ResourceName})
