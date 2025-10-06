@@ -161,46 +161,6 @@ TEST_F(ErrorHandlingTest, DiagnosticCallbackIsCalledOnError) {
 }
 
 // ============================================================================
-// BACKWARD COMPATIBILITY TESTS (Legacy API with deprecation warnings)
-// ============================================================================
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma warning(push)
-#pragma warning(disable : 4996) // MSVC deprecation warning
-
-TEST_F(ErrorHandlingTest, LegacyGetResourceSizeStillWorks) {
-    const uint8_t data[] = "Hello";
-    const uint8_t* start = data;
-    const uint8_t* end = data + 5;
-
-    auto size = resource_tools::getResourceSize(start, end);
-    EXPECT_EQ(size, 5u);
-}
-
-TEST_F(ErrorHandlingTest, LegacyGetResourceDataStillWorks) {
-    const uint8_t data[] = "Hello";
-    const uint8_t* start = data;
-
-    auto* ptr = resource_tools::getResourceData(start);
-    EXPECT_EQ(ptr, start);
-}
-
-TEST_F(ErrorHandlingTest, LegacyAccessorsStillWorkOnRealResources) {
-    auto* data = test_resources::getTestFileTXTData();
-    auto size = test_resources::getTestFileTXTSize();
-
-    ASSERT_NE(data, nullptr);
-    EXPECT_EQ(size, 22u);
-}
-
-#pragma warning(pop)
-#pragma clang diagnostic pop
-#pragma GCC diagnostic pop
-
-// ============================================================================
 // C++23 EXPECTED API TESTS (if available)
 // ============================================================================
 

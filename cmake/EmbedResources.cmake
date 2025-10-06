@@ -278,8 +278,7 @@ function(embed_resources)
         file(APPEND "${MANIFEST_FILE}" "  Size: ${FileSize} bytes\n")
         file(APPEND "${MANIFEST_FILE}" "  Symbol: ${BinarySymbol}\n")
         file(APPEND "${MANIFEST_FILE}" "  Functions:\n")
-        file(APPEND "${MANIFEST_FILE}" "    - ${ER_NAMESPACE}::get${FunctionName}Data() -> const uint8_t*\n")
-        file(APPEND "${MANIFEST_FILE}" "    - ${ER_NAMESPACE}::get${FunctionName}Size() -> uint32_t\n")
+        file(APPEND "${MANIFEST_FILE}" "    - ${ER_NAMESPACE}::get${FunctionName}Safe() -> resource_tools::ResourceResult\n")
         file(APPEND "${MANIFEST_FILE}" "\n")
     endforeach()
 
@@ -369,21 +368,6 @@ function(_embed_resources_windows)
         # RC file entry
         string(APPEND RESOURCE_ENTRIES "k${ResourceIdUpper} RCDATA \"${ER_RESOURCE_DIR}/${ResourceFile}\"\n")
 
-        # Accessor functions with better names
-        string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Data() -> const uint8_t* {\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    HRSRC hResource = FindResource(nullptr, MAKEINTRESOURCE(k${ResourceIdUpper}), RT_RCDATA);\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    if (hResource == nullptr) { return nullptr; }\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    HGLOBAL hMemory = LoadResource(nullptr, hResource);\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    if (hMemory == nullptr) { return nullptr; }\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    return static_cast<const uint8_t*>(LockResource(hMemory));\n")
-        string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
-
-        string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Size() -> uint32_t {\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    HRSRC hResource = FindResource(nullptr, MAKEINTRESOURCE(k${ResourceIdUpper}), RT_RCDATA);\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    if (hResource == nullptr) { return 0; }\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    return SizeofResource(nullptr, hResource);\n")
-        string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
-
         # Safe accessor functions (Windows)
         string(APPEND SAFE_ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Safe() -> resource_tools::ResourceResult {\n")
         string(APPEND SAFE_ACCESSOR_FUNCTIONS "    HRSRC hResource = FindResource(nullptr, MAKEINTRESOURCE(k${ResourceIdUpper}), RT_RCDATA);\n")
@@ -398,10 +382,6 @@ function(_embed_resources_windows)
         string(APPEND SAFE_ACCESSOR_FUNCTIONS "    DWORD size = SizeofResource(nullptr, hResource);\n")
         string(APPEND SAFE_ACCESSOR_FUNCTIONS "    return {data, static_cast<size_t>(size), resource_tools::ResourceError::Success};\n")
         string(APPEND SAFE_ACCESSOR_FUNCTIONS "}\n\n")
-
-        # Binary symbol compatibility
-        string(APPEND BINARY_SYMBOLS "inline const uint8_t* const ${BinarySymbolName}_ptr = get${FunctionName}Data();\n")
-        string(APPEND BINARY_SYMBOLS "#define ${BinarySymbolName} (*${BinarySymbolName}_ptr)\n\n")
 
         math(EXPR ID_COUNTER "${ID_COUNTER} + 1")
     endforeach()
@@ -540,15 +520,6 @@ function(_embed_resources_unix)
 
         string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${HeaderSymbolName}_start;\n")
         string(APPEND EXTERN_DECLARATIONS "extern \"C\" const uint8_t ${HeaderSymbolName}_end;\n\n")
-
-        # Accessor functions with better names
-        string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Size() -> uint32_t {\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    return static_cast<uint32_t>(&${HeaderSymbolName}_end - &${HeaderSymbolName}_start);\n")
-        string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
-
-        string(APPEND ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Data() -> const uint8_t* {\n")
-        string(APPEND ACCESSOR_FUNCTIONS "    return &${HeaderSymbolName}_start;\n")
-        string(APPEND ACCESSOR_FUNCTIONS "}\n\n")
 
         # Safe accessor functions (Unix)
         string(APPEND SAFE_ACCESSOR_FUNCTIONS "inline auto get${FunctionName}Safe() -> resource_tools::ResourceResult {\n")

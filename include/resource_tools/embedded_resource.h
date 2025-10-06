@@ -149,47 +149,6 @@ inline auto getResourceExpected(const uint8_t* start, const uint8_t* end)
 #endif // RESOURCE_TOOLS_HAS_EXPECTED
 
 // ============================================================================
-// LEGACY/UNSAFE API (for backward compatibility)
-// ============================================================================
-
-/**
- * Get the size of an embedded resource in bytes (LEGACY - unsafe)
- *
- * @param start Pointer to the start of the embedded resource data
- * @param end Pointer to the end of the embedded resource data
- * @return Size of the resource in bytes (uint32_t - may overflow for files >4GB)
- *
- * @deprecated Use getResourceSafe() or getResourceExpected() instead
- *
- * Usage:
- *   extern "C" const uint8_t _binary_my_file_ext_start;
- *   extern "C" const uint8_t _binary_my_file_ext_end;
- *   auto size = resource_tools::getResourceSize(&_binary_my_file_ext_start, &_binary_my_file_ext_end);
- */
-[[deprecated("Use getResourceSafe() which returns ResourceResult with proper error handling")]]
-inline auto getResourceSize(const uint8_t* start, const uint8_t* end) -> uint32_t {
-    return static_cast<uint32_t>(end - start);
-}
-
-/**
- * Get pointer to embedded resource data (LEGACY - unsafe)
- * This is primarily for consistency - on most platforms you can use the start pointer directly.
- *
- * @param start Pointer to the start of the embedded resource data
- * @return Pointer to the resource data (same as input for most platforms)
- *
- * @deprecated Use getResourceSafe() or getResourceExpected() instead
- *
- * Usage:
- *   extern "C" const uint8_t _binary_my_file_ext_start;
- *   auto* data = resource_tools::getResourceData(&_binary_my_file_ext_start);
- */
-[[deprecated("Use getResourceSafe() which returns ResourceResult with proper error handling")]]
-inline auto getResourceData(const uint8_t* start) -> const uint8_t* {
-    return start;
-}
-
-// ============================================================================
 // DIAGNOSTIC/DEBUG SUPPORT
 // ============================================================================
 

@@ -1,6 +1,6 @@
 # Error Handling in resource_tools
 
-This document describes the comprehensive error handling system implemented in resource_tools, providing safe alternatives to the legacy unsafe API.
+This document describes the comprehensive error handling system implemented in resource_tools.
 
 ## Table of Contents
 
@@ -29,8 +29,6 @@ resource_tools implements a **layered error handling strategy**:
 │  Code Generation                     │  → Manifest files + validation
 ├─────────────────────────────────────┤
 │  Runtime (Safe API)                 │  → ResourceResult or std::expected
-├─────────────────────────────────────┤
-│  Runtime (Legacy API)               │  → Deprecated with warnings
 └─────────────────────────────────────┘
 ```
 
@@ -226,63 +224,9 @@ if (result) {
 #endif
 ```
 
-### Legacy API (Deprecated)
-
-The old unsafe API still works but emits deprecation warnings:
-
-```cpp
-// ⚠️ Deprecated: No error handling
-auto* data = my_resources::getLogoPNGData();
-auto size = my_resources::getLogoPNGSize();
-
-// Compiler warning:
-// 'getLogoPNGData' is deprecated: Use getLogoPNGSafe()
-// which returns ResourceResult with proper error handling
-```
-
 ---
 
-## Migration Guide
-
-### Step 1: Update Function Calls
-
-**Before (Unsafe):**
-```cpp
-auto* logo = assets::getLogoPNGData();
-auto size = assets::getLogoPNGSize();
-
-if (logo == nullptr) {  // No way to know WHY it failed
-    return false;
-}
-```
-
-**After (Safe):**
-```cpp
-auto result = assets::getLogoPNGSafe();
-
-if (!result) {
-    std::cerr << "Logo load failed: " << result.error_message() << "\n";
-    return false;
-}
-
-auto* logo = result.data;
-auto size = result.size;
-```
-
-### Step 2: Handle Large Files
-
-**Before (Overflow Risk):**
-```cpp
-uint32_t size = getResourceSize(start, end);  // ⚠️ Truncates >4GB
-```
-
-**After (Safe):**
-```cpp
-auto result = getResourceSafe(start, end);
-size_t size = result.size;  // ✅ Supports large files
-```
-
-### Step 3: Use with SDL/Libraries
+## Using with SDL/Libraries
 
 **SDL Example:**
 ```cpp
@@ -383,9 +327,6 @@ auto result = resources::getDataSafe();
 if (!result) {
     handle_error(result.error);
 }
-
-// ❌ Bad
-auto* data = resources::getData();  // Deprecated
 ```
 
 ### 2. Check Errors Before Use
@@ -446,12 +387,11 @@ endif()
 
 ## Summary
 
-| Feature | Legacy API | Safe API | Expected API (C++23) |
-|---------|-----------|----------|---------------------|
-| Error Handling | ❌ None | ✅ Error codes | ✅ std::expected |
-| Null Safety | ❌ Unsafe | ✅ Checked | ✅ Checked |
-| Large Files (>4GB) | ❌ Overflow | ✅ size_t | ✅ size_t |
-| Error Messages | ❌ None | ✅ Yes | ✅ Yes |
-| Backward Compatible | ✅ Yes | ✅ Yes | ✅ Yes |
+| Feature | Safe API | Expected API (C++23) |
+|---------|----------|---------------------|
+| Error Handling | ✅ Error codes | ✅ std::expected |
+| Null Safety | ✅ Checked | ✅ Checked |
+| Large Files (>4GB) | ✅ size_t | ✅ size_t |
+| Error Messages | ✅ Yes | ✅ Yes |
 
-**Recommendation:** Migrate to Safe API for production code. Use Expected API when C++23 is available.
+**Recommendation:** Use Safe API for all code. Use Expected API when C++23 is available.

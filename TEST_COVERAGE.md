@@ -27,17 +27,10 @@ resource_tools now has **comprehensive test coverage** across all critical paths
 ✅ getResourceSafe with large size (1MB+)
 ✅ Error to string conversions
 ✅ Diagnostic callback infrastructure
-✅ Legacy API still works (with deprecation warnings)
-✅ Legacy accessors on real resources
 
-### 3. Boundary Conditions Tests (19 tests)
+### 3. Boundary Conditions Tests (16 tests)
 
-#### Empty Files (3 tests)
-✅ Empty file has zero size
-✅ Empty file data pointer is valid (not null)
-✅ Empty file legacy API works
-
-**Key Finding:** Even empty files have valid (non-null) data pointers
+**Note:** Empty files are not supported - attempting to embed empty files will result in a build-time error
 
 #### Large Files (4 tests)
 ✅ 5MB file correct size
@@ -114,8 +107,6 @@ resource_tools now has **comprehensive test coverage** across all critical paths
 ✅ Invalid size detection
 ✅ size_t overflow prevention
 ✅ Error message generation
-✅ Legacy API deprecation warnings
-
 ### Platform Coverage
 ✅ Unix/Linux (symbol-based linking)
 ✅ macOS (assembly-based linking)
@@ -125,7 +116,7 @@ resource_tools now has **comprehensive test coverage** across all critical paths
 
 | Condition | Test Coverage | Result |
 |-----------|--------------|--------|
-| Empty files (0 bytes) | ✅ 3 tests | PASS |
+| Empty files (0 bytes) | ❌ Not supported | Build error |
 | Large files (>1MB) | ✅ 4 tests | PASS |
 | Very large files (theoretical >4GB) | ✅ size_t support | SAFE |
 | Unicode filenames | ✅ 1 test | PASS |

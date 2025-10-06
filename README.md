@@ -112,9 +112,6 @@ int main() {
 }
 ```
 
-> **Note:** The legacy unsafe API (`getData()`, `getSize()`) is still available but deprecated.
-> See [ERROR_HANDLING.md](ERROR_HANDLING.md) for migration guide.
-
 ## API Reference
 
 ### CMake Functions
@@ -189,17 +186,6 @@ namespace resource_tools {
     };
 }
 ```
-
-### Legacy API (Deprecated)
-
-```cpp
-namespace resource_tools {
-    [[deprecated]] auto getResourceData(const uint8_t* start) -> const uint8_t*;
-    [[deprecated]] auto getResourceSize(const uint8_t* start, const uint8_t* end) -> uint32_t;
-}
-```
-
-> **Migration:** Use `getResourceSafe()` instead. See [ERROR_HANDLING.md](ERROR_HANDLING.md) for details.
 
 ## Examples
 

@@ -55,56 +55,47 @@ int main(int argc, char** argv) {
 int main() {
     std::cout << "Testing installed resource_tools library...\n";
 
-    // Test sample.txt
-    auto* sample_data = test_ns::getSampleTXTData();
-    auto sample_size = test_ns::getSampleTXTSize();
+    // Test sample.txt using the safe API
+    auto sample_result = test_ns::getSampleTXTSafe();
 
-    if (sample_data == nullptr) {
-        std::cerr << "ERROR: getSampleTXTData() returned nullptr\n";
+    if (!sample_result) {
+        std::cerr << "ERROR: getSampleTXTSafe() failed with error: " << sample_result.error_message() << "\n";
         return 1;
     }
 
-    if (sample_size == 0) {
-        std::cerr << "ERROR: getSampleTXTSize() returned 0\n";
+    if (sample_result.size == 0) {
+        std::cerr << "ERROR: Sample size is 0\n";
         return 1;
     }
 
-    std::string sample_content(reinterpret_cast<const char*>(sample_data), sample_size);
+    std::string sample_content(reinterpret_cast<const char*>(sample_result.data), sample_result.size);
     std::cout << "Sample content: " << sample_content << "\n";
-    std::cout << "Sample size: " << sample_size << " bytes\n";
+    std::cout << "Sample size: " << sample_result.size << " bytes\n";
 
     if (sample_content != "This is a test file for the installed resource_tools library!") {
         std::cerr << "ERROR: Sample content doesn't match expected value\n";
         return 1;
     }
 
-    // Test test_image.png
-    auto* image_data = test_ns::getTestImagePNGData();
-    auto image_size = test_ns::getTestImagePNGSize();
+    // Test test_image.png using the safe API
+    auto image_result = test_ns::getTestImagePNGSafe();
 
-    if (image_data == nullptr) {
-        std::cerr << "ERROR: getTestImagePNGData() returned nullptr\n";
+    if (!image_result) {
+        std::cerr << "ERROR: getTestImagePNGSafe() failed with error: " << image_result.error_message() << "\n";
         return 1;
     }
 
-    if (image_size == 0) {
-        std::cerr << "ERROR: getTestImagePNGSize() returned 0\n";
+    if (image_result.size == 0) {
+        std::cerr << "ERROR: Image size is 0\n";
         return 1;
     }
 
-    std::string image_content(reinterpret_cast<const char*>(image_data), image_size);
+    std::string image_content(reinterpret_cast<const char*>(image_result.data), image_result.size);
     std::cout << "Image content: " << image_content << "\n";
-    std::cout << "Image size: " << image_size << " bytes\n";
+    std::cout << "Image size: " << image_result.size << " bytes\n";
 
     if (image_content != "PNG_PLACEHOLDER_DATA") {
         std::cerr << "ERROR: Image content doesn't match expected value\n";
-        return 1;
-    }
-
-    // Test utility functions
-    auto* util_data = resource_tools::getResourceData(sample_data);
-    if (util_data != sample_data) {
-        std::cerr << "ERROR: getResourceData() returned different pointer\n";
         return 1;
     }
 

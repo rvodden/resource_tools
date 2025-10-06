@@ -8,10 +8,7 @@
 
 namespace @ER_NAMESPACE@ {
 
-@ACCESSOR_FUNCTIONS@
 @SAFE_ACCESSOR_FUNCTIONS@
-// Cross-platform binary symbol compatibility
-@BINARY_SYMBOLS@
 } // namespace @ER_NAMESPACE@
 
 #endif // @NAMESPACE_UPPER@_EMBEDDED_DATA_H
