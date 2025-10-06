@@ -97,7 +97,7 @@ target_link_libraries(my_app PRIVATE my_app-data resource_tools::resource_tools)
 
 int main() {
     // Safe access with error handling
-    auto result = my_resources::getLogoPNGSafe();
+    auto result = my_resources::getLogoPNG(;
 
     if (result) {
         const uint8_t* data = result.data;
@@ -163,7 +163,7 @@ namespace your_namespace {
 
 namespace your_namespace {
     // Safe accessor with error handling (recommended)
-    auto getFileNameEXTSafe() -> resource_tools::ResourceResult;
+    auto getFileNameEXT( -> resource_tools::ResourceResult;
 }
 
 namespace resource_tools {

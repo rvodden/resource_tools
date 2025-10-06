@@ -56,10 +56,10 @@ int main() {
     std::cout << "Testing installed resource_tools library...\n";
 
     // Test sample.txt using the safe API
-    auto sample_result = test_ns::getSampleTXTSafe();
+    auto sample_result = test_ns::getSampleTXT();
 
     if (!sample_result) {
-        std::cerr << "ERROR: getSampleTXTSafe() failed with error: " << sample_result.error_message() << "\n";
+        std::cerr << "ERROR: getSampleTXT() failed with error: " << sample_result.error_message() << "\n";
         return 1;
     }
 
@@ -78,10 +78,10 @@ int main() {
     }
 
     // Test test_image.png using the safe API
-    auto image_result = test_ns::getTestImagePNGSafe();
+    auto image_result = test_ns::getTestImagePNG();
 
     if (!image_result) {
-        std::cerr << "ERROR: getTestImagePNGSafe() failed with error: " << image_result.error_message() << "\n";
+        std::cerr << "ERROR: getTestImagePNG() failed with error: " << image_result.error_message() << "\n";
         return 1;
     }
 

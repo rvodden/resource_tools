@@ -17,14 +17,14 @@ protected:
 // ============================================================================
 
 TEST_F(BoundaryConditionsTest, LargeFileCorrectSize) {
-    auto result = edge_case_resources::getLargeFileBINSafe();
+    auto result = edge_case_resources::getLargeFileBIN();
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.size, 5u * 1024u * 1024u);  // 5MB
 }
 
 TEST_F(BoundaryConditionsTest, LargeFileUsingSizeT) {
-    auto result = edge_case_resources::getLargeFileBINSafe();
+    auto result = edge_case_resources::getLargeFileBIN();
 
     ASSERT_TRUE(result);
 
@@ -34,7 +34,7 @@ TEST_F(BoundaryConditionsTest, LargeFileUsingSizeT) {
 }
 
 TEST_F(BoundaryConditionsTest, LargeFileDataIntegrity) {
-    auto result = edge_case_resources::getLargeFileBINSafe();
+    auto result = edge_case_resources::getLargeFileBIN();
 
     ASSERT_TRUE(result);
     ASSERT_GT(result.size, 0u);
@@ -45,7 +45,7 @@ TEST_F(BoundaryConditionsTest, LargeFileDataIntegrity) {
 }
 
 TEST_F(BoundaryConditionsTest, LargeFileNoUint32Overflow) {
-    auto result = edge_case_resources::getLargeFileBINSafe();
+    auto result = edge_case_resources::getLargeFileBIN();
 
     ASSERT_TRUE(result);
 
@@ -58,7 +58,7 @@ TEST_F(BoundaryConditionsTest, LargeFileNoUint32Overflow) {
 // ============================================================================
 
 TEST_F(BoundaryConditionsTest, FilenameWithSpacesWorks) {
-    auto result = edge_case_resources::getTestFileWithSpacesTXTSafe();
+    auto result = edge_case_resources::getTestFileWithSpacesTXT();
 
     ASSERT_TRUE(result);
     EXPECT_GT(result.size, 0u);
@@ -71,7 +71,7 @@ TEST_F(BoundaryConditionsTest, FilenameWithSpacesWorks) {
 
 TEST_F(BoundaryConditionsTest, FilenameWithSpacesGeneratesValidSymbol) {
     // Spaces should be converted to underscores in symbol names
-    auto result = edge_case_resources::getTestFileWithSpacesTXTSafe();
+    auto result = edge_case_resources::getTestFileWithSpacesTXT();
 
     ASSERT_TRUE(result);
     // If this compiles and runs, the symbol generation worked correctly
@@ -82,7 +82,7 @@ TEST_F(BoundaryConditionsTest, FilenameWithSpacesGeneratesValidSymbol) {
 // Windows RC compiler doesn't support Unicode filenames
 TEST_F(BoundaryConditionsTest, UnicodeFilenameWorks) {
     // Unicode chars get sanitized to underscores, leaving just extension
-    auto result = edge_case_resources::getTXTSafe();
+    auto result = edge_case_resources::getTXT();
 
     ASSERT_TRUE(result);
     EXPECT_GT(result.size, 0u);
@@ -97,7 +97,7 @@ TEST_F(BoundaryConditionsTest, UnicodeFilenameWorks) {
 // ============================================================================
 
 TEST_F(BoundaryConditionsTest, MultipleDotsInFilename) {
-    auto result = edge_case_resources::getArchiveTARGZSafe();
+    auto result = edge_case_resources::getArchiveTARGZ();
 
     ASSERT_TRUE(result);
     EXPECT_GT(result.size, 0u);
@@ -111,7 +111,7 @@ TEST_F(BoundaryConditionsTest, MultipleDotsInFilename) {
 TEST_F(BoundaryConditionsTest, MultipleDotsGenerateUniqueSymbol) {
     // archive.tar.gz should generate getArchiveTARGZ* functions
     // and not collide with archive_tar.gz or similar
-    auto result = edge_case_resources::getArchiveTARGZSafe();
+    auto result = edge_case_resources::getArchiveTARGZ();
 
     ASSERT_TRUE(result);
     // If this compiles, symbol generation handled multiple dots correctly
@@ -125,9 +125,9 @@ TEST_F(BoundaryConditionsTest, MultipleDotsGenerateUniqueSymbol) {
 // Platform-specific long filename function names
 // Windows: 176 'a's, Unix: 247 'a's
 #ifdef _WIN32
-#define LONG_FILENAME_FUNC getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXTSafe
+#define LONG_FILENAME_FUNC getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXT
 #else
-#define LONG_FILENAME_FUNC getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXTSafe
+#define LONG_FILENAME_FUNC getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXT
 #endif
 
 TEST_F(BoundaryConditionsTest, VeryLongFilenameWorks) {
@@ -164,7 +164,7 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsSameResource) {
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < reads_per_thread; ++j) {
-                auto result = edge_case_resources::getLargeFileBINSafe();
+                auto result = edge_case_resources::getLargeFileBIN();
 
                 if (result && result.size == 5 * 1024 * 1024) {
                     success_count++;
@@ -196,7 +196,7 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
     for (int i = 0; i < 2; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < 500; ++j) {
-                auto result = edge_case_resources::getTestFileWithSpacesTXTSafe();
+                auto result = edge_case_resources::getTestFileWithSpacesTXT();
                 if (result && result.size > 0) {
                     total_success++;
                 }
@@ -205,12 +205,12 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
     }
 
 #ifndef _WIN32
-    // Thread 5-6: Read unicode file (sanitized to getTXTSafe())
+    // Thread 5-6: Read unicode file (sanitized to getTXT())
     // Skipped on Windows due to RC compiler limitations
     for (int i = 0; i < 2; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < 500; ++j) {
-                auto result = edge_case_resources::getTXTSafe();
+                auto result = edge_case_resources::getTXT();
                 if (result && result.size > 0) {
                     total_success++;
                 }
@@ -223,7 +223,7 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
     for (int i = 0; i < 2; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < 500; ++j) {
-                auto result = edge_case_resources::getArchiveTARGZSafe();
+                auto result = edge_case_resources::getArchiveTARGZ();
                 if (result && result.size > 0) {
                     total_success++;
                 }
@@ -246,7 +246,7 @@ TEST_F(BoundaryConditionsTest, ConcurrentAccessDataIntegrity) {
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < 100; ++j) {
-                auto result = edge_case_resources::getTestFileWithSpacesTXTSafe();
+                auto result = edge_case_resources::getTestFileWithSpacesTXT();
 
                 if (result) {
                     std::string content(reinterpret_cast<const char*>(result.data), result.size);
@@ -276,9 +276,9 @@ TEST_F(BoundaryConditionsTest, NullPointerBehaviorIsConsistent) {
 
     const uint8_t* valid_ptr = reinterpret_cast<const uint8_t*>(0x1000);
 
-    auto result1 = resource_tools::getResourceSafe(nullptr, valid_ptr);
-    auto result2 = resource_tools::getResourceSafe(valid_ptr, nullptr);
-    auto result3 = resource_tools::getResourceSafe(nullptr, nullptr);
+    auto result1 = resource_tools::getResource(nullptr, valid_ptr);
+    auto result2 = resource_tools::getResource(valid_ptr, nullptr);
+    auto result3 = resource_tools::getResource(nullptr, nullptr);
 
     // All should fail with NullPointer error
     EXPECT_FALSE(result1);
@@ -305,7 +305,7 @@ TEST_F(BoundaryConditionsTest, InvalidSizeBehaviorIsConsistent) {
     const uint8_t* start = data + 4;
     const uint8_t* end = data;  // end < start
 
-    auto result = resource_tools::getResourceSafe(start, end);
+    auto result = resource_tools::getResource(start, end);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::InvalidSize);

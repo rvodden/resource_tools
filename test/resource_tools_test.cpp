@@ -11,7 +11,7 @@ protected:
 
 TEST_F(ResourceToolsTest, TestFileResourceAccess) {
     // Test accessing the embedded text file
-    auto result = test_resources::getTestFileTXTSafe();
+    auto result = test_resources::getTestFileTXT();
 
     ASSERT_TRUE(result);
     EXPECT_GT(result.size, 0u);
@@ -23,7 +23,7 @@ TEST_F(ResourceToolsTest, TestFileResourceAccess) {
 
 TEST_F(ResourceToolsTest, BinaryResourceAccess) {
     // Test accessing the embedded binary file
-    auto result = test_resources::getBinaryDataBINSafe();
+    auto result = test_resources::getBinaryDataBIN();
 
     ASSERT_TRUE(result);
     EXPECT_GT(result.size, 0u);
@@ -35,7 +35,7 @@ TEST_F(ResourceToolsTest, BinaryResourceAccess) {
 
 TEST_F(ResourceToolsTest, ResourceSizeUtility) {
     // Test the safe resource access
-    auto result = test_resources::getTestFileTXTSafe();
+    auto result = test_resources::getTestFileTXT();
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::Success);
@@ -45,8 +45,8 @@ TEST_F(ResourceToolsTest, ResourceSizeUtility) {
 
 TEST_F(ResourceToolsTest, ResourceSizesAreCorrect) {
     // Verify our test files have expected sizes
-    auto txt_result = test_resources::getTestFileTXTSafe();
-    auto bin_result = test_resources::getBinaryDataBINSafe();
+    auto txt_result = test_resources::getTestFileTXT();
+    auto bin_result = test_resources::getBinaryDataBIN();
 
     ASSERT_TRUE(txt_result);
     ASSERT_TRUE(bin_result);

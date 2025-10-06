@@ -13,7 +13,7 @@ protected:
 // ============================================================================
 
 TEST_F(ErrorHandlingTest, SafeAccessorReturnsSuccess) {
-    auto result = test_resources::getTestFileTXTSafe();
+    auto result = test_resources::getTestFileTXT();
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::Success);
@@ -23,22 +23,22 @@ TEST_F(ErrorHandlingTest, SafeAccessorReturnsSuccess) {
 }
 
 TEST_F(ErrorHandlingTest, SafeAccessorHasCorrectSize) {
-    auto result = test_resources::getTestFileTXTSafe();
+    auto result = test_resources::getTestFileTXT();
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.size, 22u); // "Hello, Resource Tools!"
 }
 
 TEST_F(ErrorHandlingTest, SafeAccessorDataMatches) {
-    auto result = test_resources::getTestFileTXTSafe();
+    auto result = test_resources::getTestFileTXT();
 
     ASSERT_TRUE(result);
     std::string content(reinterpret_cast<const char*>(result.data), result.size);
     EXPECT_EQ(content, "Hello, Resource Tools!");
 }
 
-TEST_F(ErrorHandlingTest, BinaryResourceSafeAccess) {
-    auto result = test_resources::getBinaryDataBINSafe();
+TEST_F(ErrorHandlingTest, BinaryResourceAccess) {
+    auto result = test_resources::getBinaryDataBIN();
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.size, 10u); // "TESTBINARY"
@@ -50,12 +50,12 @@ TEST_F(ErrorHandlingTest, BinaryResourceSafeAccess) {
 // UTILITY FUNCTION TESTS
 // ============================================================================
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithValidPointers) {
+TEST_F(ErrorHandlingTest, GetResourceWithValidPointers) {
     const uint8_t data[] = "Hello";
     const uint8_t* start = data;
     const uint8_t* end = data + 5;
 
-    auto result = resource_tools::getResourceSafe(start, end);
+    auto result = resource_tools::getResource(start, end);
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.data, start);
@@ -63,65 +63,65 @@ TEST_F(ErrorHandlingTest, GetResourceSafeWithValidPointers) {
     EXPECT_EQ(result.error, resource_tools::ResourceError::Success);
 }
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithNullStart) {
+TEST_F(ErrorHandlingTest, GetResourceWithNullStart) {
     const uint8_t data[] = "Hello";
     const uint8_t* end = data + 5;
 
-    auto result = resource_tools::getResourceSafe(nullptr, end);
+    auto result = resource_tools::getResource(nullptr, end);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::NullPointer);
     EXPECT_STREQ(result.error_message(), "Null pointer encountered");
 }
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithNullEnd) {
+TEST_F(ErrorHandlingTest, GetResourceWithNullEnd) {
     const uint8_t data[] = "Hello";
     const uint8_t* start = data;
 
-    auto result = resource_tools::getResourceSafe(start, nullptr);
+    auto result = resource_tools::getResource(start, nullptr);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::NullPointer);
 }
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithBothNull) {
-    auto result = resource_tools::getResourceSafe(nullptr, nullptr);
+TEST_F(ErrorHandlingTest, GetResourceWithBothNull) {
+    auto result = resource_tools::getResource(nullptr, nullptr);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::NullPointer);
 }
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithInvalidSize) {
+TEST_F(ErrorHandlingTest, GetResourceWithInvalidSize) {
     const uint8_t data[] = "Hello";
     const uint8_t* start = data + 5;
     const uint8_t* end = data;  // end < start
 
-    auto result = resource_tools::getResourceSafe(start, end);
+    auto result = resource_tools::getResource(start, end);
 
     EXPECT_FALSE(result);
     EXPECT_EQ(result.error, resource_tools::ResourceError::InvalidSize);
     EXPECT_STREQ(result.error_message(), "Invalid resource size (end < start)");
 }
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithZeroSize) {
+TEST_F(ErrorHandlingTest, GetResourceWithZeroSize) {
     const uint8_t data[] = "Hello";
     const uint8_t* start = data;
     const uint8_t* end = data;  // Same pointer = zero size
 
-    auto result = resource_tools::getResourceSafe(start, end);
+    auto result = resource_tools::getResource(start, end);
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.size, 0u);
     EXPECT_EQ(result.error, resource_tools::ResourceError::Success);
 }
 
-TEST_F(ErrorHandlingTest, GetResourceSafeWithLargeSize) {
+TEST_F(ErrorHandlingTest, GetResourceWithLargeSize) {
     // Simulate a large resource (1MB)
     std::vector<uint8_t> large_data(1024 * 1024, 0x42);
     const uint8_t* start = large_data.data();
     const uint8_t* end = large_data.data() + large_data.size();
 
-    auto result = resource_tools::getResourceSafe(start, end);
+    auto result = resource_tools::getResource(start, end);
 
     ASSERT_TRUE(result);
     EXPECT_EQ(result.size, 1024u * 1024u);

@@ -124,7 +124,7 @@ Platform: Linux
 Resources:
   logo.png (12 KB)
   - game_assets::getLogoPNGData()
-  - game_assets::getLogoPNGSafe()
+  - game_assets::getLogoPNG(
 ```
 
 **View manifest:**
@@ -165,7 +165,7 @@ The safe API returns `ResourceResult` with explicit error codes:
 #include <resource_tools/embedded_resource.h>
 #include <my_resources/embedded_data.h>
 
-auto result = my_resources::getLogoPNGSafe();
+auto result = my_resources::getLogoPNG(;
 
 if (result) {
     // Success
@@ -231,7 +231,7 @@ if (result) {
 **SDL Example:**
 ```cpp
 auto load_font(int size) -> TTF_Font* {
-    auto result = fonts::getArialTTFSafe();
+    auto result = fonts::getArialTTF(;
 
     if (!result) {
         SDL_Log("Font load failed: %s", result.error_message());
@@ -246,7 +246,7 @@ auto load_font(int size) -> TTF_Font* {
 **Image Loading:**
 ```cpp
 auto load_texture(SDL_Renderer* renderer) -> SDL_Texture* {
-    auto result = images::getLogoPNGSafe();
+    auto result = images::getLogoPNG(;
 
     if (!result) {
         return nullptr;
@@ -310,7 +310,7 @@ auto result = getResourceSafe(start, end);
 #### 3. Resource Not Found (Windows)
 
 ```cpp
-auto result = my_resources::getMissingSafe();
+auto result = my_resources::getMissing(;
 // result.error == ResourceError::NotFound
 // result.error_message() == "Resource not found"
 ```
@@ -323,7 +323,7 @@ auto result = my_resources::getMissingSafe();
 
 ```cpp
 // ✅ Good
-auto result = resources::getDataSafe();
+auto result = resources::getData(;
 if (!result) {
     handle_error(result.error);
 }
@@ -333,20 +333,20 @@ if (!result) {
 
 ```cpp
 // ✅ Good
-auto result = resources::getConfigSafe();
+auto result = resources::getConfig(;
 if (result) {
     parse_config(result.data, result.size);
 }
 
 // ❌ Bad
-auto result = resources::getConfigSafe();
+auto result = resources::getConfig(;
 parse_config(result.data, result.size);  // May crash if failed
 ```
 
 ### 3. Log Errors for Debugging
 
 ```cpp
-auto result = resources::getAssetSafe();
+auto result = resources::getAsset(;
 if (!result) {
     // ✅ Helpful error message
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,

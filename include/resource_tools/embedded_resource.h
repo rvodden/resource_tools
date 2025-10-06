@@ -80,17 +80,17 @@ struct ResourceResult {
 };
 
 // ============================================================================
-// SAFE API (C++20 compatible - returns ResourceResult)
+// CORE API (C++20 compatible - returns ResourceResult)
 // ============================================================================
 
 /**
- * Safely get resource size with bounds checking
+ * Get resource with bounds checking and error handling
  *
  * @param start Pointer to start of resource data
  * @param end Pointer to end of resource data
  * @return ResourceResult with size or error
  */
-inline auto getResourceSafe(const uint8_t* start, const uint8_t* end) -> ResourceResult {
+inline auto getResource(const uint8_t* start, const uint8_t* end) -> ResourceResult {
     if (!start) {
         return {nullptr, 0, ResourceError::NullPointer};
     }
@@ -105,17 +105,6 @@ inline auto getResourceSafe(const uint8_t* start, const uint8_t* end) -> Resourc
 
     size_t size = static_cast<size_t>(end - start);
     return {start, size, ResourceError::Success};
-}
-
-/**
- * Safely get resource size as size_t (for large files)
- *
- * @param start Pointer to start of resource data
- * @param end Pointer to end of resource data
- * @return ResourceResult with size or error
- */
-inline auto getResourceSizeSafe(const uint8_t* start, const uint8_t* end) -> ResourceResult {
-    return getResourceSafe(start, end);
 }
 
 // ============================================================================
