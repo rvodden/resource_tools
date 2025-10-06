@@ -506,10 +506,12 @@ function(_embed_resources_unix)
             # So both C++ and assembly use the SAME name with single underscore
             set(AsmSymbolName "${BinarySymbolName}")
             # macOS: Generate assembly file and assemble it
-            set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.s")
+            # Use hash for filenames to avoid path length issues with very long resource names
+            string(MD5 ResourceHash "${ResourceFile}")
+            set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/res_${ResourceHash}.s")
             # Create a CMake script to generate the assembly file with ABSOLUTE path to resource
             # macOS assembler syntax: use .global (not .globl) and ensure proper symbol visibility
-            set(GenScript "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}_gen.cmake")
+            set(GenScript "${CMAKE_CURRENT_BINARY_DIR}/res_${ResourceHash}_gen.cmake")
             file(WRITE ${GenScript} "file(WRITE \"${AsmFile}\" \".section __DATA,__const\\n.global ${AsmSymbolName}_start\\n${AsmSymbolName}_start:\\n.incbin \\\"${FullResourcePath}\\\"\\n.global ${AsmSymbolName}_end\\n${AsmSymbolName}_end:\\n\")")
             add_custom_command(
                 OUTPUT ${OutFile}
