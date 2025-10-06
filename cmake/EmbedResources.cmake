@@ -489,7 +489,11 @@ function(_embed_resources_unix)
         set(FunctionName "${CamelBaseName}${UpperExtension}")
 
         set(FullResourcePath "${ER_RESOURCE_DIR}/${ResourceFile}")
-        set(OutFile "${CMAKE_CURRENT_BINARY_DIR}/${ResourceName}.o")
+
+        # Use hash for output filenames to avoid path length issues with very long resource names
+        # This is needed for both macOS (linker archive limits) and to avoid filesystem limits
+        string(MD5 ResourceHash "${ResourceFile}")
+        set(OutFile "${CMAKE_CURRENT_BINARY_DIR}/res_${ResourceHash}.o")
 
         # Generate binary symbol name
         string(REGEX REPLACE "\\." "_" BinarySymbol ${ResourceName})
@@ -506,8 +510,6 @@ function(_embed_resources_unix)
             # So both C++ and assembly use the SAME name with single underscore
             set(AsmSymbolName "${BinarySymbolName}")
             # macOS: Generate assembly file and assemble it
-            # Use hash for filenames to avoid path length issues with very long resource names
-            string(MD5 ResourceHash "${ResourceFile}")
             set(AsmFile "${CMAKE_CURRENT_BINARY_DIR}/res_${ResourceHash}.s")
             # Create a CMake script to generate the assembly file with ABSOLUTE path to resource
             # macOS assembler syntax: use .global (not .globl) and ensure proper symbol visibility
