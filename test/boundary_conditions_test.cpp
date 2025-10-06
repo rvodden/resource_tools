@@ -156,9 +156,16 @@ TEST_F(BoundaryConditionsTest, MultipleDotsGenerateUniqueSymbol) {
 // VERY LONG FILENAME TESTS
 // ============================================================================
 
+// Platform-specific long filename function names
+// Windows: 176 'a's, Unix: 247 'a's
+#ifdef _WIN32
+#define LONG_FILENAME_FUNC getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXTSafe
+#else
+#define LONG_FILENAME_FUNC getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXTSafe
+#endif
+
 TEST_F(BoundaryConditionsTest, VeryLongFilenameWorks) {
-    // 200 'a's + .txt (one less 'a' in function name due to camelCase conversion)
-    auto result = edge_case_resources::getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXTSafe();
+    auto result = edge_case_resources::LONG_FILENAME_FUNC();
 
     ASSERT_TRUE(result);
     EXPECT_GT(result.size, 0u);
@@ -166,7 +173,7 @@ TEST_F(BoundaryConditionsTest, VeryLongFilenameWorks) {
 
 TEST_F(BoundaryConditionsTest, VeryLongFilenameGeneratesValidIdentifier) {
     // Long filename should be converted to valid C++ identifier
-    auto result = edge_case_resources::getAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaTXTSafe();
+    auto result = edge_case_resources::LONG_FILENAME_FUNC();
 
     ASSERT_TRUE(result);
     std::string content(reinterpret_cast<const char*>(result.data), result.size);

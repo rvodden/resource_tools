@@ -6,6 +6,26 @@ embed_resources(
     NAMESPACE test_resources
 )
 
+# Generate platform-appropriate long filename test file
+# Windows: MAX_PATH = 260, leave room for path prefix (~200 char filename)
+# Unix: Much longer limits (typically 255 for filename)
+if(WIN32)
+    # Windows: Use 180 character filename (safe for MAX_PATH with typical paths)
+    string(REPEAT "a" 176 LONG_NAME_BASE)
+    set(LONG_FILENAME "${LONG_NAME_BASE}.txt")
+else()
+    # Unix: Use 251 character filename (255 - ".txt")
+    string(REPEAT "a" 247 LONG_NAME_BASE)
+    set(LONG_FILENAME "${LONG_NAME_BASE}.txt")
+endif()
+
+# Create the long filename test file if it doesn't exist
+set(LONG_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data/${LONG_FILENAME}")
+if(NOT EXISTS "${LONG_FILE_PATH}")
+    file(WRITE "${LONG_FILE_PATH}" "long filename\n")
+    message(STATUS "Created long filename test file: ${LONG_FILENAME}")
+endif()
+
 # Edge case resources - test boundary conditions
 # Note: Unicode filenames excluded on Windows due to RC compiler limitations
 set(EDGE_CASE_RESOURCES
@@ -13,7 +33,7 @@ set(EDGE_CASE_RESOURCES
     large_file.bin
     "test file with spaces.txt"
     archive.tar.gz
-    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt
+    "${LONG_FILENAME}"
 )
 
 if(NOT WIN32)

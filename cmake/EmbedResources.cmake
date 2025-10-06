@@ -307,17 +307,12 @@ function(_embed_resources_windows)
     set(BINARY_SYMBOLS "")
 
     # Generate unique base ID for this target to avoid duplicate resource IDs
-    # when multiple embed_resources() targets are linked together
-    # Use cache variable to persist counter across embed_resources() calls
-    if(NOT DEFINED RESOURCE_TOOLS_RC_ID_COUNTER)
-        set(RESOURCE_TOOLS_RC_ID_COUNTER 100 CACHE INTERNAL "Resource ID counter for Windows RC files")
-    endif()
-    set(ID_COUNTER ${RESOURCE_TOOLS_RC_ID_COUNTER})
-
-    # Reserve ID range for this target
-    list(LENGTH ER_RESOURCES NUM_RESOURCES)
-    math(EXPR NEXT_COUNTER "${RESOURCE_TOOLS_RC_ID_COUNTER} + ${NUM_RESOURCES} + 10")
-    set(RESOURCE_TOOLS_RC_ID_COUNTER ${NEXT_COUNTER} CACHE INTERNAL "Resource ID counter for Windows RC files" FORCE)
+    # Use deterministic hash of target name to get unique ID range per target
+    string(MD5 TARGET_HASH "${ER_TARGET}")
+    string(SUBSTRING "${TARGET_HASH}" 0 2 HASH_BYTE)
+    # Convert to decimal: 0x00-0xFF = 0-255, multiply by 1000 for range separation
+    math(EXPR ID_BASE "0x${HASH_BYTE} * 1000 + 100")
+    set(ID_COUNTER ${ID_BASE})
     foreach(ResourceFile IN LISTS ER_RESOURCES)
         get_filename_component(ResourceName ${ResourceFile} NAME)
         string(REGEX REPLACE "[^a-zA-Z0-9]" "_" ResourceId ${ResourceName})
