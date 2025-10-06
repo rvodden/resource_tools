@@ -80,3 +80,5 @@ __pycache__/
 # Installation test artifacts (already in build but being explicit)
 install_test/
 install_test_build/
+test/data/a*.txt
+

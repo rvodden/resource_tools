@@ -28,8 +28,8 @@ endif()
 
 # Edge case resources - test boundary conditions
 # Note: Unicode filenames excluded on Windows due to RC compiler limitations
+# Note: empty_file.dat removed - empty files are not supported
 set(EDGE_CASE_RESOURCES
-    empty_file.dat
     large_file.bin
     "test file with spaces.txt"
     archive.tar.gz

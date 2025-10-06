@@ -4,51 +4,13 @@
 #include <thread>
 #include <vector>
 #include <atomic>
+#include <algorithm>
 
 class BoundaryConditionsTest : public ::testing::Test {
 protected:
     void SetUp() override {}
     void TearDown() override {}
 };
-
-// ============================================================================
-// EMPTY FILE TESTS
-// ============================================================================
-
-TEST_F(BoundaryConditionsTest, EmptyFileHasZeroSize) {
-    auto result = edge_case_resources::getEmptyFileDATSafe();
-
-    ASSERT_TRUE(result);
-    EXPECT_EQ(result.size, 0u);
-    EXPECT_NE(result.data, nullptr);  // Pointer should still be valid
-}
-
-TEST_F(BoundaryConditionsTest, EmptyFileDataPointerIsValid) {
-    auto result = edge_case_resources::getEmptyFileDATSafe();
-
-    ASSERT_TRUE(result);
-    // Even empty files should have valid (non-null) data pointer
-    EXPECT_NE(result.data, nullptr);
-}
-
-TEST_F(BoundaryConditionsTest, EmptyFileLegacyAPIWorks) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma warning(push)
-#pragma warning(disable : 4996)
-
-    auto* data = edge_case_resources::getEmptyFileDATData();
-    auto size = edge_case_resources::getEmptyFileDATSize();
-
-    EXPECT_NE(data, nullptr);
-    EXPECT_EQ(size, 0u);
-
-#pragma warning(pop)
-#pragma clang diagnostic pop
-#pragma GCC diagnostic pop
-}
 
 // ============================================================================
 // LARGE FILE TESTS (5MB)
@@ -102,6 +64,8 @@ TEST_F(BoundaryConditionsTest, FilenameWithSpacesWorks) {
     EXPECT_GT(result.size, 0u);
 
     std::string content(reinterpret_cast<const char*>(result.data), result.size);
+    // Normalize line endings (Windows uses \r\n, Unix uses \n)
+    content.erase(std::remove(content.begin(), content.end(), '\r'), content.end());
     EXPECT_EQ(content, "spaces in name\n");
 }
 
@@ -139,6 +103,8 @@ TEST_F(BoundaryConditionsTest, MultipleDotsInFilename) {
     EXPECT_GT(result.size, 0u);
 
     std::string content(reinterpret_cast<const char*>(result.data), result.size);
+    // Normalize line endings (Windows uses \r\n, Unix uses \n)
+    content.erase(std::remove(content.begin(), content.end(), '\r'), content.end());
     EXPECT_EQ(content, "multiple dots\n");
 }
 
@@ -177,6 +143,8 @@ TEST_F(BoundaryConditionsTest, VeryLongFilenameGeneratesValidIdentifier) {
 
     ASSERT_TRUE(result);
     std::string content(reinterpret_cast<const char*>(result.data), result.size);
+    // Normalize line endings (Windows uses \r\n, Unix uses \n)
+    content.erase(std::remove(content.begin(), content.end(), '\r'), content.end());
     EXPECT_EQ(content, "long filename\n");
 }
 
@@ -217,26 +185,14 @@ TEST_F(BoundaryConditionsTest, ConcurrentReadsSameResource) {
 
 TEST_F(BoundaryConditionsTest, ConcurrentReadsDifferentResources) {
 #ifdef _WIN32
-    constexpr int num_threads = 6;  // Skip unicode threads on Windows
+    constexpr int num_threads = 4;  // Skip unicode threads on Windows
 #else
-    constexpr int num_threads = 8;
+    constexpr int num_threads = 6;
 #endif
     std::atomic<int> total_success{0};
     std::vector<std::thread> threads;
 
-    // Thread 1-2: Read empty file
-    for (int i = 0; i < 2; ++i) {
-        threads.emplace_back([&]() {
-            for (int j = 0; j < 500; ++j) {
-                auto result = edge_case_resources::getEmptyFileDATSafe();
-                if (result && result.size == 0) {
-                    total_success++;
-                }
-            }
-        });
-    }
-
-    // Thread 3-4: Read file with spaces
+    // Thread 1-2: Read file with spaces
     for (int i = 0; i < 2; ++i) {
         threads.emplace_back([&]() {
             for (int j = 0; j < 500; ++j) {
@@ -294,6 +250,8 @@ TEST_F(BoundaryConditionsTest, ConcurrentAccessDataIntegrity) {
 
                 if (result) {
                     std::string content(reinterpret_cast<const char*>(result.data), result.size);
+                    // Normalize line endings (Windows uses \r\n, Unix uses \n)
+                    content.erase(std::remove(content.begin(), content.end(), '\r'), content.end());
                     if (content != "spaces in name\n") {
                         data_corrupted = true;
                     }

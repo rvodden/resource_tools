@@ -490,6 +490,12 @@ function(_embed_resources_unix)
 
         set(FullResourcePath "${ER_RESOURCE_DIR}/${ResourceFile}")
 
+        # Check if file is empty
+        file(SIZE "${FullResourcePath}" FileSize)
+        if(FileSize EQUAL 0)
+            message(FATAL_ERROR "Cannot embed empty file: ${ResourceFile}\nEmbedding empty files is not supported as it serves no practical purpose.")
+        endif()
+
         # Use hash for output filenames to avoid path length issues with very long resource names
         # This is needed for both macOS (linker archive limits) and to avoid filesystem limits
         string(MD5 ResourceHash "${ResourceFile}")
