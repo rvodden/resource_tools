@@ -8,6 +8,34 @@ include_guard(GLOBAL)
 get_filename_component(_RESOURCE_TOOLS_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 set(RESOURCE_TOOLS_TEMPLATE_DIR "${_RESOURCE_TOOLS_CMAKE_DIR}/templates" CACHE INTERNAL "")
 
+# Helper macro to convert a filename to camelCase identifier
+# Input: InputBaseName - the base filename (without extension)
+# Output: Sets CamelBaseName in parent scope
+macro(_convert_to_camel_case InputBaseName)
+    # Sanitize basename: replace spaces and other invalid chars with underscores
+    string(REGEX REPLACE "[^a-zA-Z0-9_-]" "_" _SanitizedBaseName "${InputBaseName}")
+
+    # Convert to proper camelCase
+    # Split basename by underscores and hyphens, then capitalize each part
+    string(REPLACE "_" ";" _BaseParts ${_SanitizedBaseName})
+    set(CamelBaseName "")
+    foreach(_Part IN LISTS _BaseParts)
+        if(_Part)
+            # Also split by hyphens
+            string(REPLACE "-" ";" _HyphenParts ${_Part})
+            foreach(_HyphenPart IN LISTS _HyphenParts)
+                if(_HyphenPart)
+                    string(SUBSTRING ${_HyphenPart} 0 1 _FirstChar)
+                    string(TOUPPER ${_FirstChar} _FirstChar)
+                    string(SUBSTRING ${_HyphenPart} 1 -1 _RestChars)
+                    string(TOLOWER ${_RestChars} _RestChars)
+                    string(APPEND CamelBaseName "${_FirstChar}${_RestChars}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+endmacro()
+
 #[=======================================================================[.rst:
 EmbedResources
 --------------
@@ -323,28 +351,8 @@ function(_embed_resources_windows)
         get_filename_component(Extension ${ResourceFile} EXT)
         string(REPLACE "." "" Extension ${Extension})
 
-        # Sanitize basename: replace spaces and other invalid chars with underscores
-        string(REGEX REPLACE "[^a-zA-Z0-9_-]" "_" BaseName "${BaseName}")
-
         # Convert to proper camelCase
-        # Split basename by underscores and hyphens, then capitalize each part
-        string(REPLACE "_" ";" BaseParts ${BaseName})
-        set(CamelBaseName "")
-        foreach(Part IN LISTS BaseParts)
-            if(Part)
-                # Also split by hyphens
-                string(REPLACE "-" ";" HyphenParts ${Part})
-                foreach(HyphenPart IN LISTS HyphenParts)
-                    if(HyphenPart)
-                        string(SUBSTRING ${HyphenPart} 0 1 FirstChar)
-                        string(TOUPPER ${FirstChar} FirstChar)
-                        string(SUBSTRING ${HyphenPart} 1 -1 RestChars)
-                        string(TOLOWER ${RestChars} RestChars)
-                        string(APPEND CamelBaseName "${FirstChar}${RestChars}")
-                    endif()
-                endforeach()
-            endif()
-        endforeach()
+        _convert_to_camel_case("${BaseName}")
 
         # Handle extension
         string(TOUPPER ${Extension} UpperExtension)
@@ -461,28 +469,8 @@ function(_embed_resources_unix)
         get_filename_component(Extension ${ResourceFile} EXT)
         string(REPLACE "." "" Extension ${Extension})
 
-        # Sanitize basename: replace spaces and other invalid chars with underscores
-        string(REGEX REPLACE "[^a-zA-Z0-9_-]" "_" BaseName "${BaseName}")
-
         # Convert to proper camelCase
-        # Split basename by underscores and hyphens, then capitalize each part
-        string(REPLACE "_" ";" BaseParts ${BaseName})
-        set(CamelBaseName "")
-        foreach(Part IN LISTS BaseParts)
-            if(Part)
-                # Also split by hyphens
-                string(REPLACE "-" ";" HyphenParts ${Part})
-                foreach(HyphenPart IN LISTS HyphenParts)
-                    if(HyphenPart)
-                        string(SUBSTRING ${HyphenPart} 0 1 FirstChar)
-                        string(TOUPPER ${FirstChar} FirstChar)
-                        string(SUBSTRING ${HyphenPart} 1 -1 RestChars)
-                        string(TOLOWER ${RestChars} RestChars)
-                        string(APPEND CamelBaseName "${FirstChar}${RestChars}")
-                    endif()
-                endforeach()
-            endif()
-        endforeach()
+        _convert_to_camel_case("${BaseName}")
 
         # Handle extension
         string(TOUPPER ${Extension} UpperExtension)
